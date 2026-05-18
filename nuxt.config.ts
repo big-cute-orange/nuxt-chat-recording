@@ -3,7 +3,8 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-05-17',
   devtools: { enabled: true },
   runtimeConfig: {
-    deepseekApiKey: '',
+    apiKey: '',
+    aiBaseUrl: '',
   },
   modules: ['@nuxt/ui', '@nuxt/eslint'],
   css: ['~/assets/css/main.css'],

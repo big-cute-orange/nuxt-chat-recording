@@ -13,18 +13,26 @@ export default defineEventHandler(async (event) => {
 
   // 2.从运行时配置中安全地获取 API 密钥
   const config = useRuntimeConfig()
-  const apiKey = config.deepseekApiKey
+  const apiKey = config.apiKey
+  const apiBaseUrl = config.aiBaseUrl
 
   if (!apiKey) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'DeepSeek API Key is not configured',
+      statusMessage: 'API Key is not configured',
+    })
+  }
+
+  if (!apiBaseUrl) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'AI Base URL is not configured',
     })
   }
 
   try {
     // 3.调用 DeepSeek API
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const response = await fetch(`${apiBaseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,10 +47,10 @@ export default defineEventHandler(async (event) => {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('DeepSeek API Error:', response.status, errorText)
+      console.error('API Error:', response.status, errorText)
       throw createError({
         statusCode: response.status,
-        statusMessage: `DeepSeek API error: ${response.statusText}`,
+        statusMessage: `API error: ${response.statusText}`,
       })
     }
 
@@ -53,7 +61,7 @@ export default defineEventHandler(async (event) => {
       content: result.choices[0].message.content,
     }
   } catch (error) {
-    console.error('Error calling DeepSeek API:', error)
+    console.error('Error calling API:', error)
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to get response from AI',
