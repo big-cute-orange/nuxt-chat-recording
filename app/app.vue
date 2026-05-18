@@ -1,11 +1,14 @@
 <template>
   <UApp>
     <NuxtRouteAnnouncer />
-    <NuxtWelcome />
-    <UButton>Click me! {{ a }}</UButton>
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
   </UApp>
 </template>
 
-<script setup lang="js">
-let a = ref(false)
+<script setup>
+useHead({
+  meta: [{ name: 'google', content: 'notranslate' }],
+})
 </script>
