@@ -3,7 +3,7 @@
 // Filtered by userId from session when auth is active (nullable in anonymous mode).
 
 import { defineEventHandler, getQuery, type H3Event } from 'h3';
-import { desc, eq, sql, isNull } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { useDb } from '#server/utils/db';
 import { meetings } from '#server/db/schema';
 import type { IHistoryEntry } from '~/types';
@@ -15,25 +15,26 @@ export default defineEventHandler(async (event: H3Event) => {
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
     const offset = (page - 1) * limit;
 
-    // Get userId from session (null if not authenticated)
+    // Anonymous users do not have server-side history.
     const session = await getUserSession(event);
-    const userId = session?.user?.id || null;
+    const userId = session?.user?.id;
 
-    // Build where clause: filter by userId if authenticated, otherwise return only anonymous meetings
-    const where = userId ? eq(meetings.userId, userId) : isNull(meetings.userId);
+    if (!userId) {
+        return { data: [], total: 0, page, limit };
+    }
 
     const [rows, countRows] = await Promise.all([
         db
             .select()
             .from(meetings)
-            .where(where)
+            .where(eq(meetings.userId, userId))
             .orderBy(desc(meetings.createdAt))
             .limit(limit)
             .offset(offset),
         db
             .select({ count: sql<number>`COUNT(*)` })
             .from(meetings)
-            .where(where),
+            .where(eq(meetings.userId, userId)),
     ]);
 
     const total = countRows[0]?.count ?? 0;

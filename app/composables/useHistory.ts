@@ -1,17 +1,64 @@
 import type { IHistoryEntry, IHistoryPage, IMeetingSummary } from '~/types';
 
 const LEGACY_KEY = 'minutai:history';
+const LOCAL_LIMIT = 100;
 
 export function useHistory() {
+    const { user, isReady, fetchSession } = useAuth();
     const history = ref<IHistoryEntry[]>([]);
     const total = ref(0);
     const page = ref(1);
     const limit = ref(20);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    const isLoggedIn = computed(() => Boolean(user.value?.id));
+
+    async function ensureAuthReady() {
+        if (!isReady.value) {
+            await fetchSession();
+        }
+    }
+
+    function readLocalHistory(): IHistoryEntry[] {
+        if (typeof localStorage === 'undefined') {
+            return [];
+        }
+
+        try {
+            const raw = localStorage.getItem(LEGACY_KEY);
+            if (!raw) {
+                return [];
+            }
+
+            const entries = JSON.parse(raw) as IHistoryEntry[];
+            return Array.isArray(entries) ? entries : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function writeLocalHistory(entries: IHistoryEntry[]) {
+        if (typeof localStorage === 'undefined') {
+            return;
+        }
+
+        localStorage.setItem(LEGACY_KEY, JSON.stringify(entries.slice(0, LOCAL_LIMIT)));
+    }
 
     // ── Fetch ─────────────────────────────────────────────────────────────────
     async function load(p = 1) {
+        await ensureAuthReady();
+
+        if (!isLoggedIn.value) {
+            const entries = readLocalHistory();
+
+            history.value = entries;
+            total.value = entries.length;
+            page.value = 1;
+            error.value = null;
+            return;
+        }
+
         loading.value = true;
         error.value = null;
 
@@ -29,6 +76,12 @@ export function useHistory() {
     }
 
     async function loadMore() {
+        await ensureAuthReady();
+
+        if (!isLoggedIn.value) {
+            return;
+        }
+
         if (history.value.length >= total.value) {
             return;
         }
@@ -61,6 +114,28 @@ export function useHistory() {
         provider: IHistoryEntry['provider'],
         mode: 'single' | 'compare' = 'single'
     ): Promise<string> {
+        await ensureAuthReady();
+
+        if (!isLoggedIn.value) {
+            const entry: IHistoryEntry = {
+                id: crypto.randomUUID(),
+                date: new Date().toISOString(),
+                meetingType: summary.meetingType,
+                provider,
+                charCount: transcript.length,
+                transcript,
+                summary,
+                mode,
+            };
+
+            const entries = [entry, ...readLocalHistory()];
+            writeLocalHistory(entries);
+            history.value = entries.slice(0, LOCAL_LIMIT);
+            total.value = history.value.length;
+            page.value = 1;
+            return entry.id;
+        }
+
         const entry = await $fetch<IHistoryEntry>('/api/history', {
             method: 'POST',
             body: { summary, transcript, provider, mode },
@@ -73,6 +148,27 @@ export function useHistory() {
     }
 
     async function update(id: string, summary: IMeetingSummary) {
+        await ensureAuthReady();
+
+        if (!isLoggedIn.value) {
+            const entries = readLocalHistory();
+            const idx = entries.findIndex((e) => e.id === id);
+
+            if (idx === -1) {
+                return;
+            }
+
+            entries[idx] = {
+                ...entries[idx]!,
+                summary,
+                meetingType: summary.meetingType,
+            };
+            writeLocalHistory(entries);
+            history.value = entries;
+            total.value = entries.length;
+            return;
+        }
+
         await $fetch(`/api/history/${id}`, {
             method: 'PATCH',
             body: { summary },
@@ -90,12 +186,31 @@ export function useHistory() {
     }
 
     async function remove(id: string) {
+        await ensureAuthReady();
+
+        if (!isLoggedIn.value) {
+            const entries = readLocalHistory().filter((e) => e.id !== id);
+            writeLocalHistory(entries);
+            history.value = entries;
+            total.value = entries.length;
+            return;
+        }
+
         await $fetch(`/api/history/${id}`, { method: 'DELETE' });
         history.value = history.value.filter((e) => e.id !== id);
         total.value = Math.max(0, total.value - 1);
     }
 
     async function clear() {
+        await ensureAuthReady();
+
+        if (!isLoggedIn.value) {
+            writeLocalHistory([]);
+            history.value = [];
+            total.value = 0;
+            return;
+        }
+
         const ids = history.value.map((e) => e.id);
 
         await Promise.all(ids.map((id) => $fetch(`/api/history/${id}`, { method: 'DELETE' })));
@@ -108,6 +223,12 @@ export function useHistory() {
     // Removes the localStorage key after a successful migration.
     async function migrateFromLocalStorage() {
         if (typeof localStorage === 'undefined') {
+            return;
+        }
+
+        await ensureAuthReady();
+
+        if (!isLoggedIn.value) {
             return;
         }
 

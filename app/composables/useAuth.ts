@@ -17,6 +17,7 @@ interface IAuthSession {
 export const useAuth = () => {
     const user = useState<ISessionUser | null>('auth.user', () => null);
     const isLoading = useState<boolean>('auth.isLoading', () => false);
+    const isReady = useState<boolean>('auth.isReady', () => false);
     const error = useState<string>('auth.error', () => '');
 
     const fetchSession = async () => {
@@ -28,6 +29,8 @@ export const useAuth = () => {
         } catch {
             user.value = null;
             return null;
+        } finally {
+            isReady.value = true;
         }
     };
 
@@ -91,6 +94,7 @@ export const useAuth = () => {
     return {
         user: readonly(user),
         isLoading: readonly(isLoading),
+        isReady: readonly(isReady),
         error: readonly(error),
         login,
         register,

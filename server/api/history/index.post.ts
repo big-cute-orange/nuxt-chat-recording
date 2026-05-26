@@ -15,9 +15,12 @@ export default defineEventHandler(async (event: H3Event) => {
         throw createError({ statusCode: 400, message: 'summary and provider are required.' });
     }
 
-    // Get userId from session (null if not authenticated)
     const session = await getUserSession(event);
-    const userId = session?.user?.id || null;
+    const userId = session?.user?.id;
+
+    if (!userId) {
+        throw createError({ statusCode: 401, message: 'Login required.' });
+    }
 
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
