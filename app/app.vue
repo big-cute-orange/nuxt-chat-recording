@@ -1,14 +1,5 @@
 <template>
-  <UApp>
-    <NuxtRouteAnnouncer />
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
-  </UApp>
+    <div>
+        <NuxtPage />
+    </div>
 </template>
-
-<script setup>
-useHead({
-  meta: [{ name: 'google', content: 'notranslate' }],
-})
-</script>
