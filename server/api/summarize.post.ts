@@ -72,11 +72,12 @@ function buildProviderConfig(provider: TProvider, config: Record<string, string>
         case 'doubao':
             return {
                 client: new OpenAI({
-                    apiKey: config.doubaoApiKey,
+                    apiKey: config.dobaoApiKey,
                     baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
+                    timeout: 30_000, // 30s，防止接入点 ID 错误时无限挂起
                 }),
                 // 豆包需要填写你在火山引擎创建的推理接入点 ID
-                model: config.doubaoModelId || '',
+                model: config.dobaoModelId || '',
                 apiKeyName: 'Doubao API key',
             };
     }
@@ -138,11 +139,11 @@ export default defineEventHandler(async (event: H3Event) => {
                 fullText += delta;
                 stream.write(`data: ${JSON.stringify({ chunk: delta })}\n\n`);
             }
-
-            if (chunk.choices[0]?.finish_reason === 'stop') {
-                stream.write(`data: ${JSON.stringify({ done: true, full: fullText })}\n\n`);
-            }
         }
+
+        // 在所有 chunk 接收完后统一发送 done，不依赖 finish_reason 的具体值
+        // 避免不同 provider 返回不同 finish_reason 导致前端永远等待
+        stream.write(`data: ${JSON.stringify({ done: true, full: fullText })}\n\n`);
     } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
 

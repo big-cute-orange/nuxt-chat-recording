@@ -45,11 +45,11 @@ function buildClient(provider: TProvider, config: Record<string, string>): { cli
                 model: 'qwen-plus',
             };
         case 'doubao':
-            if (!config.doubaoApiKey) throw new Error('Doubao API key not configured.');
-            if (!config.doubaoModelId) throw new Error('Doubao model endpoint ID (DOUBAO_MODEL_ID) not configured.');
+            if (!config.dobaoApiKey) throw new Error('Doubao API key not configured.');
+            if (!config.dobaoModelId) throw new Error('Doubao model endpoint ID (DOBAO_MODEL_ID) not configured.');
             return {
-                client: new OpenAI({ apiKey: config.doubaoApiKey, baseURL: 'https://ark.cn-beijing.volces.com/api/v3' }),
-                model: config.doubaoModelId,
+                client: new OpenAI({ apiKey: config.dobaoApiKey, baseURL: 'https://ark.cn-beijing.volces.com/api/v3', timeout: 120_000 }),
+                model: config.dobaoModelId,
             };
     }
 }
