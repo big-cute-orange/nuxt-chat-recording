@@ -18,12 +18,7 @@ const handleLogin = async (provider: 'github' | 'google') => {
         <!-- Authenticated: Show user menu -->
         <template v-if="user">
             <div class="user-menu">
-                <img
-                    v-if="user.avatarUrl"
-                    :src="user.avatarUrl"
-                    :alt="user.name || user.email"
-                    class="avatar"
-                />
+                <img v-if="user.avatarUrl" :src="user.avatarUrl" :alt="user.name || user.email" class="avatar" />
                 <span v-else class="avatar-placeholder">{{ (user.name || user.email)?.[0]?.toUpperCase() }}</span>
                 <span class="name">{{ user.name || user.email }}</span>
                 <button class="logout-btn" @click="logout">Sign out</button>
@@ -33,17 +28,12 @@ const handleLogin = async (provider: 'github' | 'google') => {
         <!-- Not authenticated: Show login options -->
         <template v-else>
             <div class="login-menu">
-                <button class="menu-toggle" @click="isOpen = !isOpen">
+                <!-- <button class="menu-toggle" @click="isOpen = !isOpen">
                     Sign in
-                </button>
+                </button> -->
                 <Transition name="dropdown">
                     <div v-if="isOpen" class="dropdown" @click.stop="isOpen = false">
-                        <button
-                            v-for="provider in providers"
-                            :key="provider.id"
-                            class="provider-btn"
-                            @click="handleLogin(provider.id)"
-                        >
+                        <button v-for="provider in providers" :key="provider.id" class="provider-btn" @click="handleLogin(provider.id)">
                             <span class="provider-icon">{{ provider.name[0] }}</span>
                             {{ provider.name }}
                         </button>

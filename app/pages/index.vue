@@ -630,13 +630,13 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
         <Transition name="sidebar">
             <aside v-if="historyOpen" class="sidebar">
                 <div class="sidebar-header">
-                    <h2 class="sidebar-title">History</h2>
+                    <h2 class="sidebar-title">历史记录</h2>
                     <div class="sidebar-actions">
-                        <button v-if="history.length" class="sidebar-clear" @click="historyClear">Clear all</button>
+                        <button v-if="history.length" class="sidebar-clear" @click="historyClear">清空全部</button>
                         <button class="sidebar-close" @click="historyOpen = false">✕</button>
                     </div>
                 </div>
-                <div v-if="!history.length" class="sidebar-empty">No summaries yet. Analyze a meeting to get started.</div>
+                <div v-if="!history.length" class="sidebar-empty">暂无会议摘要，开始分析会议内容吧</div>
                 <ul v-else class="history-list">
                     <li
                         v-for="entry in history"
@@ -653,9 +653,9 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                             <span class="history-provider">{{ providerName(entry.provider) }}</span>
                         </div>
                         <div class="history-item-stats">
-                            <span>{{ entry.summary?.participants?.length ?? 0 }} participants</span>
-                            <span>{{ entry.summary?.actionItems?.length ?? 0 }} actions</span>
-                            <span>{{ entry.charCount.toLocaleString() }} chars</span>
+                            <span>{{ entry.summary?.participants?.length ?? 0 }} 参会人员</span>
+                            <span>{{ entry.summary?.actionItems?.length ?? 0 }} 行动项</span>
+                            <span>{{ entry.charCount.toLocaleString() }} 字符数</span>
                         </div>
                     </li>
                 </ul>
@@ -676,7 +676,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                 <div class="logo">
                     <span class="logo-icon">◈</span>
                     <span class="logo-text">MinutAI</span>
-                    <span class="logo-tag">meeting intelligence</span>
+                    <span class="logo-tag">智能会议纪要助手</span>
                 </div>
                 <div class="header-right">
                     <!-- <NuxtLink to="/dashboard" class="history-btn">
@@ -691,14 +691,14 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
 
                     <button class="history-btn" @click="historyOpen = true">
                         <span class="history-btn-icon">◷</span>
-                        History
+                        历史记录
                         <span v-if="historyTotal" class="history-count">{{ historyTotal }}</span>
                     </button>
 
                     <!-- Mode toggle -->
                     <div class="mode-toggle">
-                        <button :class="['mode-btn', mode === 'single' ? 'active' : '']" @click="switchMode('single')">Single</button>
-                        <button :class="['mode-btn', mode === 'compare' ? 'active' : '']" @click="switchMode('compare')">⇄ Compare</button>
+                        <button :class="['mode-btn', mode === 'single' ? 'active' : '']" @click="switchMode('single')">单个分析</button>
+                        <button :class="['mode-btn', mode === 'compare' ? 'active' : '']" @click="switchMode('compare')">⇄ 对比分析</button>
                     </div>
 
                     <AuthButton />
@@ -747,14 +747,14 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                     <div class="hero">
                         <h1 class="hero-title">
                             <template v-if="mode === 'single'">
-                                Turn meetings
+                                让会议成果
                                 <br />
-                                <em>into action</em>
+                                <em>快速落地</em>
                             </template>
                             <template v-else>
-                                Compare AI
+                                AI 会议分析
                                 <br />
-                                <em>side by side</em>
+                                <em>对比</em>
                             </template>
                         </h1>
                         <p class="hero-sub">
@@ -762,17 +762,17 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                 Paste a transcript or upload a file — AI extracts everything that matters.
                             </template>
                             <template v-else>
-                                See how
+                                上传会议记录，对比
                                 <strong>{{ providerName(compareProviders[0]) }}</strong>
-                                and
+                                和
                                 <strong>{{ providerName(compareProviders[1]) }}</strong>
-                                analyse the same meeting.
+                                的分析结果
                             </template>
                         </p>
                     </div>
 
                     <div class="input-tabs">
-                        <button :class="['tab', inputMode === 'paste' ? 'active' : '']" @click="inputMode = 'paste'">Paste text</button>
+                        <button :class="['tab', inputMode === 'paste' ? 'active' : '']" @click="inputMode = 'paste'">粘贴文本</button>
                         <!-- <button :class="['tab', inputMode === 'upload' ? 'active' : '']" @click="inputMode = 'upload'">Upload file</button> -->
                         <!-- <button :class="['tab', inputMode === 'audio' ? 'active' : '']" @click="inputMode = 'audio'">
                             🎙 Audio / Video
@@ -785,7 +785,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                     <div v-if="inputMode === 'paste'" class="input-area">
                         <textarea v-model="transcriptText" class="textarea" placeholder="Paste your meeting transcript here..." rows="12" />
                         <div class="textarea-footer">
-                            <span class="char-count">{{ transcriptText.length.toLocaleString() }} characters</span>
+                            <span class="char-count">{{ transcriptText.length.toLocaleString() }} 字符数</span>
                         </div>
                     </div>
 
@@ -1042,18 +1042,18 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                             <!-- Export all to calendar -->
                             <div v-if="itemsWithDeadlines(result.actionItems) > 1" class="cal-export-row">
                                 <span class="cal-export-label">Add all {{ itemsWithDeadlines(result.actionItems) }} deadlines to:</span>
-                                <button
+                                <!-- <button
                                     class="cal-export-btn gcal-btn"
                                     @click="openAllInCalendar(result.actionItems, result.meetingType, 'google')"
                                 >
                                     Google Calendar
-                                </button>
-                                <button
+                                </button> -->
+                                <!-- <button
                                     class="cal-export-btn outlook-btn"
                                     @click="openAllInCalendar(result.actionItems, result.meetingType, 'outlook')"
                                 >
                                     Outlook
-                                </button>
+                                </button> -->
                             </div>
                         </div>
                         <!-- Edit mode -->
