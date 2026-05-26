@@ -8,6 +8,20 @@
             "when": 1771588753664,
             "tag": "0000_hot_tomorrow_man",
             "breakpoints": true
+        },
+        {
+            "idx": 1,
+            "version": "6",
+            "when": 1771588753700,
+            "tag": "0002_add_local_auth",
+            "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "6",
+            "when": 1771588753800,
+            "tag": "0003_fix_updated_at",
+            "breakpoints": true
         }
     ]
 }

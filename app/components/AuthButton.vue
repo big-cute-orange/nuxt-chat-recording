@@ -1,183 +1,93 @@
 <script setup lang="ts">
-const { user, login, logout } = useAuth();
-const isOpen = ref(false);
+const { user, logout } = useAuth();
 
-const providers = [
-    { name: 'GitHub', id: 'github', icon: 'github' },
-    { name: 'Google', id: 'google', icon: 'google' },
-] as const;
-
-const handleLogin = async (provider: 'github' | 'google') => {
-    isOpen.value = false;
-    await login(provider);
-};
+const displayName = computed(() => user.value?.username || user.value?.name || user.value?.email || '?');
+const initial = computed(() => displayName.value[0]?.toUpperCase() ?? '?');
 </script>
 
 <template>
     <div class="auth-button">
-        <!-- Authenticated: Show user menu -->
+        <!-- Authenticated -->
         <template v-if="user">
             <div class="user-menu">
-                <img v-if="user.avatarUrl" :src="user.avatarUrl" :alt="user.name || user.email" class="avatar" />
-                <span v-else class="avatar-placeholder">{{ (user.name || user.email)?.[0]?.toUpperCase() }}</span>
-                <span class="name">{{ user.name || user.email }}</span>
-                <button class="logout-btn" @click="logout">Sign out</button>
+                <div class="avatar">{{ initial }}</div>
+                <span class="name">{{ displayName }}</span>
+                <button class="logout-btn" @click="logout">退出</button>
             </div>
         </template>
 
-        <!-- Not authenticated: Show login options -->
+        <!-- Not authenticated -->
         <template v-else>
-            <div class="login-menu">
-                <!-- <button class="menu-toggle" @click="isOpen = !isOpen">
-                    Sign in
-                </button> -->
-                <Transition name="dropdown">
-                    <div v-if="isOpen" class="dropdown" @click.stop="isOpen = false">
-                        <button v-for="provider in providers" :key="provider.id" class="provider-btn" @click="handleLogin(provider.id)">
-                            <span class="provider-icon">{{ provider.name[0] }}</span>
-                            {{ provider.name }}
-                        </button>
-                    </div>
-                </Transition>
-            </div>
+            <NuxtLink to="/login" class="signin-btn">Sign in</NuxtLink>
         </template>
     </div>
 </template>
 
 <style scoped>
 .auth-button {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
 }
 
+/* ── Authenticated state ── */
 .user-menu {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 0;
-}
-
-.avatar,
-.avatar-placeholder {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-    font-size: 13px;
-    color: white;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    gap: 10px;
 }
 
 .avatar {
-    object-fit: cover;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .name {
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-default);
+    color: #fff;
+    opacity: 0.9;
 }
 
 .logout-btn {
-    padding: 6px 12px;
-    background: var(--color-red-500, #ef4444);
-    color: white;
-    border: none;
-    border-radius: 4px;
+    padding: 5px 11px;
+    background: rgb(255 255 255 / 12%);
+    color: #fff;
+    border: 1px solid rgb(255 255 255 / 20%);
+    border-radius: 6px;
     font-size: 12px;
-    cursor: pointer;
+    font-family: Syne, sans-serif;
     font-weight: 500;
-    transition: opacity 0.2s;
+    cursor: pointer;
+    transition: background 0.15s;
 }
 
 .logout-btn:hover {
-    opacity: 0.9;
+    background: rgb(255 255 255 / 20%);
 }
 
-.menu-toggle {
-    padding: 8px 12px;
-    background: var(--color-accent, #0066cc);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-
-.menu-toggle:hover {
-    opacity: 0.9;
-}
-
-.login-menu {
-    position: relative;
-}
-
-.dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: 8px;
-    background: var(--color-panel, #ffffff);
-    border: 1px solid var(--color-border-strong, #e0e0ec);
-    border-radius: 12px;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    min-width: 180px;
-    padding: 6px;
-    backdrop-filter: blur(8px);
-}
-
-.provider-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    width: 100%;
-    text-align: left;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 13px;
-    color: var(--text-default, #1a1a2e);
+/* ── Not authenticated state ── */
+.signin-btn {
+    padding: 7px 16px;
+    background: var(--accent);
+    color: #fff;
     border-radius: 8px;
-    transition: background 0.2s;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: Syne, sans-serif;
+    text-decoration: none;
+    transition: opacity 0.15s;
 }
 
-.provider-btn:hover {
-    background: var(--bg-hover, #f0f0f8);
-}
-
-.provider-btn:active {
-    background: var(--bg-hover, #e0e0f0);
-}
-
-.provider-icon {
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: bold;
-    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.35);
-}
-
-.dropdown-enter-active,
-.dropdown-leave-active {
-    transition: all 0.15s ease;
-}
-
-.dropdown-enter-from,
-.dropdown-leave-to {
-    opacity: 0;
-    transform: translateY(-4px);
+.signin-btn:hover {
+    opacity: 0.85;
 }
 </style>

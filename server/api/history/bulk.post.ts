@@ -16,8 +16,12 @@ export default defineEventHandler(async (event: H3Event) => {
         throw createError({ statusCode: 400, message: 'entries must be a non-empty array.' });
     }
 
-    // TODO (Phase 4): attach getUserSession(event).user.id
-    const userId: string | null = null;
+    const session = await getUserSession(event);
+    const userId = session?.user?.id;
+
+    if (!userId) {
+        throw createError({ statusCode: 401, message: 'Login required.' });
+    }
 
     const now = new Date().toISOString();
     let inserted = 0;
