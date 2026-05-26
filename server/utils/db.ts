@@ -7,7 +7,7 @@ import * as schema from '#server/db/schema';
 // Re-used across all server requests within the same Nitro process.
 // In development, falls back to a local SQLite file when TURSO_DB_URL is unset.
 
-let _db: ReturnType<typeof drizzle> | null = null;
+let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
 /**
  * Returns true when the URL looks like an unfilled placeholder.
