@@ -8,16 +8,18 @@ export const users = sqliteTable(
     'users',
     {
         id: text('id').primaryKey(), // crypto.randomUUID()
-        provider: text('provider').notNull(), // 'github' | 'google'
+        username: text('username').unique(), // local auth only
+        passwordHash: text('password_hash'), // local auth only
+        provider: text('provider').notNull(), // 'local'
         providerAccountId: text('provider_account_id').notNull(),
         name: text('name'),
-        email: text('email').notNull().unique(),
+        email: text('email'), // nullable — local users may not have email
         avatarUrl: text('avatar_url'),
         createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`), // ISO string
         updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`), // ISO string
     },
     (table) => ({
-        emailIdx: index('users_email_idx').on(table.email),
+        usernameIdx: index('users_username_idx').on(table.username),
         providerIdx: index('users_provider_idx').on(table.provider),
     })
 );
