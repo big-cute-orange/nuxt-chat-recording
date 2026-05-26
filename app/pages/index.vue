@@ -701,8 +701,6 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                         <button :class="['mode-btn', mode === 'compare' ? 'active' : '']" @click="switchMode('compare')">⇄ 对比分析</button>
                     </div>
 
-                    <AuthButton />
-
                     <!-- Provider selector (single mode only) -->
                     <div v-if="mode === 'single'" class="provider-toggle">
                         <button
@@ -735,6 +733,8 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                             <span v-else-if="compareProviders[1] === p.id" class="compare-label">B</span>
                         </button>
                     </div>
+
+                    <AuthButton />
                 </div>
             </div>
         </header>

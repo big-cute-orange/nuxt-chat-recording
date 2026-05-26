@@ -4,7 +4,17 @@ export default defineNuxtConfig({
 
     app: {
         head: {
-            link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+            link: [
+                { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+                // Preconnect to Google Fonts domains so the font request starts
+                // as early as possible — eliminates the flash of unstyled text
+                { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+                { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+                {
+                    rel: 'stylesheet',
+                    href: 'https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap',
+                },
+            ],
         },
     },
 
@@ -13,11 +23,11 @@ export default defineNuxtConfig({
         compatibilityVersion: 4,
     },
 
+    css: ['~/assets/css/main.css'],
+
     modules: ['@nuxtjs/tailwindcss', 'nuxt-auth-utils'],
 
     devtools: { enabled: true },
-
-    css: ['~/assets/css/main.css'],
 
     runtimeConfig: {
         // Server-side only — never exposed to the client
@@ -34,18 +44,6 @@ export default defineNuxtConfig({
         // Set NUXT_SESSION_PASSWORD in .env for production
         session: {
             password: process.env.NUXT_SESSION_PASSWORD || 'dev-secret-must-be-32-characters-long',
-        },
-
-        // OAuth provider configs (Phase 2)
-        oauth: {
-            github: {
-                id: process.env.NUXT_OAUTH_GITHUB_CLIENT_ID || '',
-                secret: process.env.NUXT_OAUTH_GITHUB_CLIENT_SECRET || '',
-            },
-            google: {
-                id: process.env.NUXT_OAUTH_GOOGLE_CLIENT_ID || '',
-                secret: process.env.NUXT_OAUTH_GOOGLE_CLIENT_SECRET || '',
-            },
         },
 
         // Public runtime config (safe to expose to client)
