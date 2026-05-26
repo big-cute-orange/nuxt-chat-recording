@@ -758,9 +758,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                             </template>
                         </h1>
                         <p class="hero-sub">
-                            <template v-if="mode === 'single'">
-                                Paste a transcript or upload a file — AI extracts everything that matters.
-                            </template>
+                            <template v-if="mode === 'single'">粘贴会议记录或上传文件，AI 自动提取所有关键信息</template>
                             <template v-else>
                                 上传会议记录，对比
                                 <strong>{{ providerName(compareProviders[0]) }}</strong>
@@ -920,21 +918,21 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                         <div class="results-meta">
                             <template v-if="!editing">
                                 <span class="meeting-type-badge">{{ result.meetingType }}</span>
-                                <span class="provider-badge">via {{ providerLabel }}</span>
+                                <span class="provider-badge">通过 {{ providerLabel }}</span>
                             </template>
                             <template v-else-if="draft">
                                 <input v-model="draft.meetingType" class="edit-meeting-type" placeholder="Meeting type" />
-                                <span class="editing-indicator">✎ Editing</span>
+                                <span class="editing-indicator">✎ 编辑</span>
                             </template>
                         </div>
                         <div class="results-actions">
                             <template v-if="!editing">
                                 <button class="edit-btn" title="Edit results" @click="startEditing">✎ Edit</button>
-                                <button class="reset-btn" @click="handleReset">← New meeting</button>
+                                <button class="reset-btn" @click="handleReset">← 新建会议</button>
                             </template>
                             <template v-else>
-                                <button class="cancel-btn" @click="cancelEditing">Cancel</button>
-                                <button class="save-btn" @click="saveEdits">✓ Save changes</button>
+                                <button class="cancel-btn" @click="cancelEditing">取消</button>
+                                <button class="save-btn" @click="saveEdits">✓ 保存更改</button>
                             </template>
                         </div>
                     </div>
@@ -944,34 +942,34 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                         <!-- View mode -->
                         <template v-if="!editing">
                             <div class="chips-group">
-                                <span class="chips-label">Participants</span>
+                                <span class="chips-label">参会人员</span>
                                 <span v-for="p in result.participants" :key="p" class="chip chip-blue">{{ p }}</span>
                             </div>
                             <div class="chips-group">
-                                <span class="chips-label">Topics</span>
+                                <span class="chips-label">讨论主题</span>
                                 <span v-for="t in result.keyTopics" :key="t" class="chip chip-purple">{{ t }}</span>
                             </div>
                         </template>
                         <!-- Edit mode -->
                         <template v-else-if="draft">
                             <div class="edit-chip-group">
-                                <span class="chips-label">Participants</span>
+                                <span class="chips-label">参会人员</span>
                                 <div class="edit-chips">
                                     <div v-for="(p, i) in draft.participants" :key="i" class="edit-chip-row">
                                         <input v-model="draft.participants[i]" class="edit-chip-input chip-blue-input" placeholder="Name" />
                                         <button class="remove-chip-btn" @click="removeParticipant(i)">✕</button>
                                     </div>
-                                    <button class="add-chip-btn" @click="addParticipant">+ Add person</button>
+                                    <button class="add-chip-btn" @click="addParticipant">+ 添加人员</button>
                                 </div>
                             </div>
                             <div class="edit-chip-group">
-                                <span class="chips-label">Topics</span>
+                                <span class="chips-label">讨论主题</span>
                                 <div class="edit-chips">
                                     <div v-for="(t, i) in draft.keyTopics" :key="i" class="edit-chip-row">
                                         <input v-model="draft.keyTopics[i]" class="edit-chip-input chip-purple-input" placeholder="Topic" />
                                         <button class="remove-chip-btn" @click="removeTopic(i)">✕</button>
                                     </div>
-                                    <button class="add-chip-btn" @click="addTopic">+ Add topic</button>
+                                    <button class="add-chip-btn" @click="addTopic">+ 添加主题</button>
                                 </div>
                             </div>
                         </template>
@@ -981,7 +979,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                     <div class="card">
                         <div class="card-header">
                             <span class="card-icon">◎</span>
-                            <h2 class="card-title">Executive Summary</h2>
+                            <h2 class="card-title">执行摘要</h2>
                         </div>
                         <p v-if="!editing" class="summary-text">{{ result.summary }}</p>
                         <textarea
@@ -997,7 +995,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                     <div class="card">
                         <div class="card-header">
                             <span class="card-icon">◉</span>
-                            <h2 class="card-title">Action Items</h2>
+                            <h2 class="card-title">行动项</h2>
                             <span class="card-count">{{ editing ? draft?.actionItems.length : result.actionItems.length }}</span>
                         </div>
                         <!-- View mode -->
@@ -1019,7 +1017,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                     <span class="action-meta">👤 {{ item.owner }}</span>
                                     <span class="action-meta">📅 {{ item.deadline }}</span>
                                     <!-- Calendar links -->
-                                    <div class="cal-links">
+                                    <!-- <div class="cal-links">
                                         <a
                                             :href="getLinks(item, result.meetingType).google"
                                             target="_blank"
@@ -1036,12 +1034,12 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                         >
                                             O
                                         </a>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
                             <!-- Export all to calendar -->
                             <div v-if="itemsWithDeadlines(result.actionItems) > 1" class="cal-export-row">
-                                <span class="cal-export-label">Add all {{ itemsWithDeadlines(result.actionItems) }} deadlines to:</span>
+                                <span class="cal-export-label">全部添加 {{ itemsWithDeadlines(result.actionItems) }} deadlines to:</span>
                                 <!-- <button
                                     class="cal-export-btn gcal-btn"
                                     @click="openAllInCalendar(result.actionItems, result.meetingType, 'google')"

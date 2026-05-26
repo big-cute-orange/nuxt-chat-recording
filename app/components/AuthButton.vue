@@ -18,7 +18,7 @@ const initial = computed(() => displayName.value[0]?.toUpperCase() ?? '?');
 
         <!-- Not authenticated -->
         <template v-else>
-            <NuxtLink to="/login" class="signin-btn">Sign in</NuxtLink>
+            <NuxtLink to="/login" class="signin-btn">登录 / 注册</NuxtLink>
         </template>
     </div>
 </template>
