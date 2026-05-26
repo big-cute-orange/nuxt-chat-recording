@@ -1,6 +1,12 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-    compatibilityDate: '2026-02-19',
+    compatibilityDate: '2026-05-20',
+
+    app: {
+        head: {
+            link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+        },
+    },
 
     // Nuxt 4 uses the app/ directory by default
     future: {
@@ -16,9 +22,9 @@ export default defineNuxtConfig({
     runtimeConfig: {
         // Server-side only — never exposed to the client
         deepseekApiKey: process.env.DEEPSEEK_API_KEY || '',
-        anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
-        openaiApiKey: process.env.OPENAI_API_KEY || '',
-        geminiApiKey: process.env.GEMINI_API_KEY || '',
+        qwenApiKey: process.env.QWEN_API_KEY || '',
+        dobaoApiKey: process.env.DOBAO_API_KEY || '',
+        dobaoModelId: process.env.DOBAO_MODEL_ID || '',
 
         // Turso (LibSQL) — falls back to a local SQLite file in development
         tursoDbUrl: process.env.TURSO_DB_URL || '',
