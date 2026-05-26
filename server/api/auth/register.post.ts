@@ -2,7 +2,6 @@ import { defineEventHandler, readBody, createError } from 'h3';
 import { eq } from 'drizzle-orm';
 import { useDb } from '#server/utils/db';
 import { users } from '#server/db/schema';
-import { hashPassword } from '#server/utils/password';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 

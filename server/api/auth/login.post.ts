@@ -2,7 +2,6 @@ import { defineEventHandler, readBody, createError } from 'h3';
 import { eq } from 'drizzle-orm';
 import { useDb } from '#server/utils/db';
 import { users } from '#server/db/schema';
-import { verifyPassword } from '#server/utils/password';
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
@@ -34,7 +33,7 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 401, message: '用户名或密码错误' });
     }
 
-    const valid = await verifyPassword(password, user.passwordHash);
+    const valid = await verifyPassword(user.passwordHash, password);
 
     if (!valid) {
         throw createError({ statusCode: 401, message: '用户名或密码错误' });
