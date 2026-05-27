@@ -121,36 +121,36 @@ function flashCopied(key: string) {
 }
 
 function buildMarkdown(s: IMeetingSummary, prov?: string): string {
-    const date = new Date().toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'long',
+    const date = new Date().toLocaleDateString('zh-CN', {
         year: 'numeric',
+        month: 'long',
+        day: 'numeric',
     });
     const via = prov ?? props.providerLabel;
     const lines: string[] = [];
 
-    lines.push(`# Meeting Summary — ${s.meetingType}`);
-    lines.push(`*${date} · Analysed via ${via}*`);
+    lines.push(`# 会议纪要 — ${s.meetingType}`);
+    lines.push(`*${date} · 分析模型：${via}*`);
     lines.push('');
-    lines.push('## Participants');
+    lines.push('## 参与人');
     lines.push(s.participants.map((p: string) => `- ${p}`).join('\n'));
     lines.push('');
-    lines.push('## Key Topics');
+    lines.push('## 关键议题');
     lines.push(s.keyTopics.map((t: string) => `- ${t}`).join('\n'));
     lines.push('');
-    lines.push('## Executive Summary');
+    lines.push('## 会议摘要');
     lines.push(s.summary);
     lines.push('');
-    lines.push('## Action Items');
+    lines.push('## 行动项');
 
     s.actionItems.forEach((item: { priority: string; task: string; owner: string; deadline: string }) => {
         lines.push(`- **[${item.priority.toUpperCase()}]** ${item.task}`);
-        lines.push(`  - Owner: ${item.owner}`);
-        lines.push(`  - Deadline: ${item.deadline}`);
+        lines.push(`  - 负责人：${item.owner}`);
+        lines.push(`  - 截止日期：${item.deadline}`);
     });
 
     lines.push('');
-    lines.push('## Decisions Made');
+    lines.push('## 决策事项');
 
     s.decisions.forEach((d: { decision: string; rationale: string; madeBy: string }, i: number) => {
         lines.push(`${i + 1}. **${d.decision}**`);

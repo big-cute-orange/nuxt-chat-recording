@@ -66,40 +66,40 @@ function flashCopied(key: string) {
 }
 
 function buildMarkdown(s: IMeetingSummary, prov: string): string {
-    const date = new Date().toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'long',
+    const date = new Date().toLocaleDateString('zh-CN', {
         year: 'numeric',
+        month: 'long',
+        day: 'numeric',
     });
     const lines: string[] = [];
 
-    lines.push(`# Meeting Summary — ${s.meetingType}`);
-    lines.push(`*${date} · Analysed via ${prov}*`);
+    lines.push(`# 会议纪要 — ${s.meetingType}`);
+    lines.push(`*${date} · 分析模型：${prov}*`);
     lines.push('');
-    lines.push('## Participants');
+    lines.push('## 参与人');
     lines.push(s.participants.map((p) => `- ${p}`).join('\n'));
     lines.push('');
-    lines.push('## Key Topics');
+    lines.push('## 关键议题');
     lines.push(s.keyTopics.map((t) => `- ${t}`).join('\n'));
     lines.push('');
-    lines.push('## Executive Summary');
+    lines.push('## 会议摘要');
     lines.push(s.summary);
     lines.push('');
-    lines.push('## Action Items');
+    lines.push('## 行动项');
 
     s.actionItems.forEach((item) => {
         lines.push(`- **[${item.priority.toUpperCase()}]** ${item.task}`);
-        lines.push(`  - Owner: ${item.owner}`);
-        lines.push(`  - Deadline: ${item.deadline}`);
+        lines.push(`  - 负责人：${item.owner}`);
+        lines.push(`  - 截止日期：${item.deadline}`);
     });
 
     lines.push('');
-    lines.push('## Decisions Made');
+    lines.push('## 决策事项');
 
     s.decisions.forEach((d, i) => {
         lines.push(`${i + 1}. **${d.decision}**`);
         if (d.rationale) lines.push(`   *${d.rationale}*`);
-        lines.push(`   - ${d.madeBy}`);
+        lines.push(`   — ${d.madeBy}`);
     });
 
     return lines.join('\n');
@@ -120,7 +120,7 @@ async function copyToClipboard(text: string, key: string) {
     flashCopied(key);
 }
 
-function downloadMarkdown(s: IMeetingSummary, prov: string) {
+function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     const content = buildMarkdown(s, prov);
     const blob = new Blob([content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
@@ -130,7 +130,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
     a.download = `${s.meetingType.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.md`;
     a.click();
     URL.revokeObjectURL(url);
-    flashCopied('download');
+    flashCopied(key);
 }
 </script>
 
@@ -295,13 +295,13 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
                                             () => {
                                                 const result = getCompareResultAsAny(side);
                                                 if (result)
-                                                    downloadMarkdown(result, props.providerName(props.compareResults[side].provider));
+                                                    downloadMarkdown(result, props.providerName(props.compareResults[side].provider), `download-${side}`);
                                             }
                                         "
                                     >
                                         <span class="export-btn-icon">↓</span>
                                         <span class="export-btn-label">下载 .md 文件</span>
-                                        <span class="export-btn-confirm" :class="{ visible: copiedKey === 'download' }">✓ 已完成</span>
+                                        <span class="export-btn-confirm" :class="{ visible: copiedKey === `download-${side}` }">✓ 已完成</span>
                                     </button>
                                 </div>
                             </div>

@@ -335,28 +335,18 @@ function providerName(id: TProvider) {
     return providers.find((p) => p.id === id)?.label ?? id;
 }
 
-// Toggle a provider in the compare pair
 function toggleCompareProvider(id: TProvider) {
     const [a, b] = compareProviders.value;
 
     if (a === id) {
-        // swap a with the third option
         const third = providers.find((p) => p.id !== a && p.id !== b)!;
-
-        compareProviders.value = [third.id, b];
+        compareProviders.value = [third.id as TProvider, b];
     } else if (b === id) {
         const third = providers.find((p) => p.id !== a && p.id !== b)!;
-
-        compareProviders.value = [a, third.id];
+        compareProviders.value = [a, third.id as TProvider];
+    } else {
+        compareProviders.value = [a, id];
     }
-}
-
-function isCompareProviderDisabled(id: TProvider): boolean {
-    return (
-        compareProviders.value.includes(id) &&
-        compareProviders.value.filter((x: TProvider) => x === id).length === 1 &&
-        compareProviders.value.length === 2
-    );
 }
 </script>
 
@@ -420,12 +410,7 @@ function isCompareProviderDisabled(id: TProvider): boolean {
                             v-for="p in providers"
                             :key="p.id"
                             :class="['toggle-btn', compareProviders.includes(p.id) ? 'active' : 'inactive']"
-                            :disabled="isCompareProviderDisabled(p.id)"
-                            @click="
-                                compareProviders.includes(p.id)
-                                    ? toggleCompareProvider(p.id)
-                                    : (compareProviders = [compareProviders[0], p.id])
-                            "
+                            @click="toggleCompareProvider(p.id as TProvider)"
                         >
                             <span class="toggle-dot" />
                             {{ p.label }}
