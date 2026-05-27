@@ -153,13 +153,20 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
                         <span class="compare-provider-name">{{ props.providerName(props.compareResults[side].provider) }}</span>
                     </div>
 
-                    <div v-if="isError(props.compareResults[side].result)" class="compare-error">⚠ {{ props.compareResults[side].result.error }}</div>
+                    <div v-if="isError(props.compareResults[side].result)" class="compare-error">
+                        ⚠ {{ props.compareResults[side].result.error }}
+                    </div>
 
                     <template v-else>
                         <div class="compare-result">
                             <div
                                 class="compare-field"
-                                :class="{ differs: valuesDiffer(!isError(props.compareResults.a.result) ? props.compareResults.a.result?.meetingType : undefined, !isError(props.compareResults.b.result) ? props.compareResults.b.result?.meetingType : undefined) }"
+                                :class="{
+                                    differs: valuesDiffer(
+                                        !isError(props.compareResults.a.result) ? props.compareResults.a.result?.meetingType : undefined,
+                                        !isError(props.compareResults.b.result) ? props.compareResults.b.result?.meetingType : undefined
+                                    ),
+                                }"
                             >
                                 <span class="compare-field-label">会议类型</span>
                                 <span class="compare-field-value">{{ getCompareMeetingType(side) }}</span>
@@ -167,7 +174,12 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
 
                             <div
                                 class="compare-field"
-                                :class="{ differs: valuesDiffer(!isError(props.compareResults.a.result) ? props.compareResults.a.result?.keyTopics : undefined, !isError(props.compareResults.b.result) ? props.compareResults.b.result?.keyTopics : undefined) }"
+                                :class="{
+                                    differs: valuesDiffer(
+                                        !isError(props.compareResults.a.result) ? props.compareResults.a.result?.keyTopics : undefined,
+                                        !isError(props.compareResults.b.result) ? props.compareResults.b.result?.keyTopics : undefined
+                                    ),
+                                }"
                             >
                                 <span class="compare-field-label">讨论主题</span>
                                 <div class="compare-chips">
@@ -177,7 +189,12 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
 
                             <div
                                 class="compare-field"
-                                :class="{ differs: valuesDiffer(!isError(props.compareResults.a.result) ? props.compareResults.a.result?.summary : undefined, !isError(props.compareResults.b.result) ? props.compareResults.b.result?.summary : undefined) }"
+                                :class="{
+                                    differs: valuesDiffer(
+                                        !isError(props.compareResults.a.result) ? props.compareResults.a.result?.summary : undefined,
+                                        !isError(props.compareResults.b.result) ? props.compareResults.b.result?.summary : undefined
+                                    ),
+                                }"
                             >
                                 <span class="compare-field-label">执行摘要</span>
                                 <p class="compare-summary">{{ getCompareSummary(side) }}</p>
@@ -185,14 +202,29 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
 
                             <div
                                 class="compare-field"
-                                :class="{ differs: valuesDiffer(!isError(props.compareResults.a.result) ? props.compareResults.a.result?.actionItems?.length : undefined, !isError(props.compareResults.b.result) ? props.compareResults.b.result?.actionItems?.length : undefined) }"
+                                :class="{
+                                    differs: valuesDiffer(
+                                        !isError(props.compareResults.a.result)
+                                            ? props.compareResults.a.result?.actionItems?.length
+                                            : undefined,
+                                        !isError(props.compareResults.b.result)
+                                            ? props.compareResults.b.result?.actionItems?.length
+                                            : undefined
+                                    ),
+                                }"
                             >
-                                <span class="compare-field-label">行动项 <span class="compare-count-badge">{{ getCompareActionItems(side).length }}</span></span>
+                                <span class="compare-field-label">
+                                    行动项
+                                    <span class="compare-count-badge">{{ getCompareActionItems(side).length }}</span>
+                                </span>
                                 <div class="compare-action-list">
                                     <div v-for="(item, i) in getCompareActionItems(side)" :key="i" class="compare-action-item">
                                         <span
                                             class="priority-badge"
-                                            :style="{ color: props.priorityConfig[item.priority]?.color ?? '#fff', background: props.priorityConfig[item.priority]?.bg ?? 'rgba(255,255,255,0.05)' }"
+                                            :style="{
+                                                color: props.priorityConfig[item.priority]?.color ?? '#fff',
+                                                background: props.priorityConfig[item.priority]?.bg ?? 'rgba(255,255,255,0.05)',
+                                            }"
                                         >
                                             {{ props.priorityConfig[item.priority]?.label ?? item.priority }}
                                         </span>
@@ -206,9 +238,21 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
 
                             <div
                                 class="compare-field"
-                                :class="{ differs: valuesDiffer(!isError(props.compareResults.a.result) ? props.compareResults.a.result?.decisions?.length : undefined, !isError(props.compareResults.b.result) ? props.compareResults.b.result?.decisions?.length : undefined) }"
+                                :class="{
+                                    differs: valuesDiffer(
+                                        !isError(props.compareResults.a.result)
+                                            ? props.compareResults.a.result?.decisions?.length
+                                            : undefined,
+                                        !isError(props.compareResults.b.result)
+                                            ? props.compareResults.b.result?.decisions?.length
+                                            : undefined
+                                    ),
+                                }"
                             >
-                                <span class="compare-field-label">关键决策 <span class="compare-count-badge">{{ getCompareDecisions(side).length }}</span></span>
+                                <span class="compare-field-label">
+                                    决策事项
+                                    <span class="compare-count-badge">{{ getCompareDecisions(side).length }}</span>
+                                </span>
                                 <div class="compare-decision-list">
                                     <div v-for="(d, i) in getCompareDecisions(side)" :key="i" class="compare-decision-item">
                                         <span class="decision-number">{{ String(i + 1).padStart(2, '0') }}</span>
@@ -228,7 +272,16 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
                                         v-if="getCompareResultAsAny(side)"
                                         type="button"
                                         class="export-btn"
-                                        @click="() => { const result = getCompareResultAsAny(side); if (result) copyToClipboard(buildMarkdown(result, props.providerName(props.compareResults[side].provider)), `md-${side}`); }"
+                                        @click="
+                                            () => {
+                                                const result = getCompareResultAsAny(side);
+                                                if (result)
+                                                    copyToClipboard(
+                                                        buildMarkdown(result, props.providerName(props.compareResults[side].provider)),
+                                                        `md-${side}`
+                                                    );
+                                            }
+                                        "
                                     >
                                         <span class="export-btn-icon">◻</span>
                                         <span class="export-btn-label">复制为 Markdown</span>
@@ -238,7 +291,13 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
                                         v-if="getCompareResultAsAny(side)"
                                         type="button"
                                         class="export-btn"
-                                        @click="() => { const result = getCompareResultAsAny(side); if (result) downloadMarkdown(result, props.providerName(props.compareResults[side].provider)); }"
+                                        @click="
+                                            () => {
+                                                const result = getCompareResultAsAny(side);
+                                                if (result)
+                                                    downloadMarkdown(result, props.providerName(props.compareResults[side].provider));
+                                            }
+                                        "
                                     >
                                         <span class="export-btn-icon">↓</span>
                                         <span class="export-btn-label">下载 .md 文件</span>
@@ -271,11 +330,33 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
 </template>
 
 <style scoped>
-.compare-section { display: flex; flex-direction: column; gap: 0; }
-.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
-@media (width <= 700px) { .compare-grid { grid-template-columns: 1fr; } }
-.results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.results-meta { display: flex; gap: 10px; align-items: center; }
+.compare-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 24px;
+}
+@media (width <= 700px) {
+    .compare-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.results-meta {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
 .meeting-type-badge {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
@@ -297,9 +378,23 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
     font-weight: 600;
     transition: all 0.2s;
 }
-.reset-btn:hover { color: var(--text); border-color: var(--accent); }
-.compare-col { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-.compare-col-header { display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.reset-btn:hover {
+    color: var(--text);
+    border-color: var(--accent);
+}
+.compare-col {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+.compare-col-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
 .compare-side-badge {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
@@ -323,14 +418,56 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
     color: var(--accent);
     border: 1px solid rgb(124 109 255 / 30%);
 }
-.compare-provider-name { font-size: 15px; font-weight: 700; }
-.compare-error { padding: 24px 20px; color: var(--red); font-size: 13px; }
-.compare-field { padding: 16px 20px; border-bottom: 1px solid var(--border); transition: background 0.2s; }
-.compare-field:last-child { border-bottom: none; }
-.compare-field.differs { background: rgb(255 179 71 / 4%); border-left: 3px solid var(--amber); padding-left: 17px; }
-.compare-field-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.compare-count-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 6px; border-radius: 999px; background: var(--bg-hover); border: 1px solid var(--border-bright); color: var(--text-muted); font-size: 10px; }
-.compare-field-value { font-size: 13px; font-weight: 600; }
+.compare-provider-name {
+    font-size: 15px;
+    font-weight: 700;
+}
+.compare-error {
+    padding: 24px 20px;
+    color: var(--red);
+    font-size: 13px;
+}
+.compare-field {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+}
+.compare-field:last-child {
+    border-bottom: none;
+}
+.compare-field.differs {
+    background: rgb(255 179 71 / 4%);
+    border-left: 3px solid var(--amber);
+    padding-left: 17px;
+}
+.compare-field-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.compare-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-bright);
+    color: var(--text-muted);
+    font-size: 10px;
+}
+.compare-field-value {
+    font-size: 13px;
+    font-weight: 600;
+}
 .chip {
     font-size: 12px;
     font-weight: 600;
@@ -342,8 +479,16 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
     color: var(--accent);
     border: 1px solid rgb(124 109 255 / 20%);
 }
-.compare-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.compare-summary { font-size: 13px; line-height: 1.7; color: var(--text); }
+.compare-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.compare-summary {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+}
 .priority-badge {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -354,8 +499,15 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
     letter-spacing: 0.05em;
     flex-shrink: 0;
 }
-.compare-result { display: flex; flex-direction: column; }
-.compare-action-list { display: flex; flex-direction: column; gap: 8px; }
+.compare-result {
+    display: flex;
+    flex-direction: column;
+}
+.compare-action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 .compare-action-item {
     display: flex;
     gap: 10px;
@@ -365,14 +517,25 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
     border: 1px solid var(--border);
     border-radius: 8px;
 }
-.compare-action-body { display: flex; flex-direction: column; gap: 3px; }
-.compare-action-task { font-size: 12px; line-height: 1.4; }
+.compare-action-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.compare-action-task {
+    font-size: 12px;
+    line-height: 1.4;
+}
 .compare-action-meta {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
     color: var(--text-muted);
 }
-.compare-decision-list { display: flex; flex-direction: column; gap: 8px; }
+.compare-decision-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 .compare-decision-item {
     display: flex;
     gap: 12px;
@@ -419,8 +582,16 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
     gap: 10px;
     margin-bottom: 20px;
 }
-.card-icon { font-size: 16px; color: var(--accent); }
-.card-title { font-size: 16px; font-weight: 700; flex: 1; letter-spacing: -0.3px; }
+.card-icon {
+    font-size: 16px;
+    color: var(--accent);
+}
+.card-title {
+    font-size: 16px;
+    font-weight: 700;
+    flex: 1;
+    letter-spacing: -0.3px;
+}
 .card-count {
     font-family: 'DM Mono', monospace;
     font-size: 12px;
@@ -430,13 +601,38 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
     padding: 2px 9px;
     border-radius: 20px;
 }
-.compare-transcript-card { margin-top: 20px; }
-.transcript-toggle { width: 100%; background: none; border: none; cursor: pointer; text-align: left; padding: 0; color: var(--text); }
-.transcript-toggle:hover .card-title { color: var(--accent); }
-.transcript-card-header { margin-bottom: 0; }
-.expand-arrow { font-size: 16px; color: var(--text-muted); transition: transform 0.25s ease; display: inline-block; }
-.expand-arrow.rotated { transform: rotate(180deg); }
-.transcript-body { padding-top: 20px; border-top: 1px solid var(--border); margin-top: 4px; }
+.compare-transcript-card {
+    margin-top: 20px;
+}
+.transcript-toggle {
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    color: var(--text);
+}
+.transcript-toggle:hover .card-title {
+    color: var(--accent);
+}
+.transcript-card-header {
+    margin-bottom: 0;
+}
+.expand-arrow {
+    font-size: 16px;
+    color: var(--text-muted);
+    transition: transform 0.25s ease;
+    display: inline-block;
+}
+.expand-arrow.rotated {
+    transform: rotate(180deg);
+}
+.transcript-body {
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+}
 .transcript-text {
     font-family: 'DM Mono', monospace;
     font-size: 12px;
@@ -447,7 +643,11 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
     max-height: 400px;
     overflow-y: auto;
 }
-.export-actions { display: flex; flex-direction: column; gap: 8px; }
+.export-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 .export-btn {
     display: flex;
     align-items: center;
@@ -462,9 +662,23 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
     width: 100%;
     color: var(--text);
 }
-.export-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
-.export-btn-icon { font-size: 16px; color: var(--accent); flex-shrink: 0; width: 20px; text-align: center; }
-.export-btn-label { font-family: Syne, sans-serif; font-size: 13px; font-weight: 600; flex: 1; }
+.export-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+}
+.export-btn-icon {
+    font-size: 16px;
+    color: var(--accent);
+    flex-shrink: 0;
+    width: 20px;
+    text-align: center;
+}
+.export-btn-label {
+    font-family: Syne, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    flex: 1;
+}
 .export-btn-confirm {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
@@ -473,8 +687,15 @@ function downloadMarkdown(s: IMeetingSummary, prov: string) {
     transition: opacity 0.2s;
     flex-shrink: 0;
 }
-.export-btn-confirm.visible { opacity: 1; }
+.export-btn-confirm.visible {
+    opacity: 1;
+}
 
-.fade-up-enter-active { transition: all 0.5s ease 0.1s; }
-.fade-up-enter-from { opacity: 0; transform: translateY(16px); }
+.fade-up-enter-active {
+    transition: all 0.5s ease 0.1s;
+}
+.fade-up-enter-from {
+    opacity: 0;
+    transform: translateY(16px);
+}
 </style>

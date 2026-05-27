@@ -164,30 +164,30 @@ function buildMarkdown(s: IMeetingSummary, prov?: string): string {
 function buildEmail(s: IMeetingSummary): string {
     const lines: string[] = [];
 
-    lines.push('Hi everyone,', '');
-    lines.push(`Here's a quick summary of our ${s.meetingType} and the agreed next steps.`, '');
-    lines.push('Summary', '-------', s.summary, '');
+    lines.push('大家好，', '');
+    lines.push(`以下是本次 ${s.meetingType} 的会议摘要及后续行动项，供大家参考。`, '');
+    lines.push('执行摘要', '--------', s.summary, '');
 
     if (s.actionItems.length) {
-        lines.push('Action Items', '------------');
+        lines.push('行动项', '------');
 
         s.actionItems.forEach((item: { task: string; owner: string; deadline: string; priority: string }) => {
             lines.push(`• ${item.task}`);
-            lines.push(`  Owner: ${item.owner} | Deadline: ${item.deadline}`);
+            lines.push(`  负责人：${item.owner} | 截止日期：${item.deadline}`);
         });
 
         lines.push('');
     }
 
     if (s.decisions.length) {
-        lines.push('Decisions', '---------');
+        lines.push('决策事项', '--------');
 
         s.decisions.forEach((d: { decision: string; rationale: string; madeBy: string }) => lines.push(`• ${d.decision}`));
 
         lines.push('');
     }
 
-    lines.push('Please let me know if anything is missing or needs updating.', '', 'Thanks');
+    lines.push('如有遗漏或需要更正，请随时告知。', '', '谢谢');
 
     return lines.join('\n');
 }
@@ -356,7 +356,7 @@ function downloadMarkdown(s: IMeetingSummary, prov?: string) {
             <div class="card">
                 <div class="card-header">
                     <span class="card-icon">◈</span>
-                    <h2 class="card-title">关键决策</h2>
+                    <h2 class="card-title">决策事项</h2>
                     <span class="card-count">{{ editing ? draft?.decisions.length : result.decisions.length }}</span>
                 </div>
                 <!-- View mode -->

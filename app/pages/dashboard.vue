@@ -368,7 +368,7 @@ function getProviderLabel(provider: string): string {
                             <div class="recent-meta">
                                 <span class="recent-stat">{{ entry.summary.participants.length }} 参与人</span>
                                 <span class="recent-stat">{{ entry.summary.actionItems.length }} 行动项</span>
-                                <span class="recent-stat">{{ entry.summary.decisions.length }} 关键决策</span>
+                                <span class="recent-stat">{{ entry.summary.decisions.length }} 决策事项</span>
                                 <span class="recent-provider" :style="{ color: getProviderColor(entry.provider) }">
                                     {{ getProviderLabel(entry.provider) }}
                                 </span>

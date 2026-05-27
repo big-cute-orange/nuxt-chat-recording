@@ -4,25 +4,25 @@ import { defineEventHandler, readBody, setResponseHeaders, createError, type H3E
 const JSON_SCHEMA = `
 Return this exact JSON structure — no markdown, no code blocks, just raw JSON:
 {
-  "summary": "2-4 paragraph executive summary of the meeting",
+  "summary": "2-4段会议执行摘要",
   "actionItems": [
     {
-      "task": "Clear description of what needs to be done",
-      "owner": "Name or 'Unassigned' if not specified",
-      "deadline": "Date/timeframe or 'No deadline set'",
+      "task": "行动项的清晰描述",
+      "owner": "负责人姓名，若未指定则填'未分配'",
+      "deadline": "日期或时间范围，若未设置则填'无截止日期'",
       "priority": "high|medium|low"
     }
   ],
   "decisions": [
     {
-      "decision": "What was decided",
-      "rationale": "Why this decision was made (brief)",
-      "madeBy": "Who decided or 'Group decision'"
+      "decision": "决策事项",
+      "rationale": "决策原因（简述）",
+      "madeBy": "决策人，若为集体决策则填'集体决策'"
     }
   ],
-  "participants": ["Name1", "Name2"],
-  "meetingType": "e.g. Sprint Planning, Client Review, Team Standup, etc.",
-  "keyTopics": ["topic1", "topic2", "topic3"]
+  "participants": ["姓名1", "姓名2"],
+  "meetingType": "如：迭代规划、客户评审、每日站会等",
+  "keyTopics": ["主题1", "主题2", "主题3"]
 }`;
 
 const TRANSCRIPT_PROMPT = `You are an expert meeting analyst. Analyze the provided meeting transcript and extract structured information.
