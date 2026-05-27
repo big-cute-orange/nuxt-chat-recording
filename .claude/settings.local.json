@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(node -e \"console.log\\('ok'\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(npx vue-tsc *)",
+      "Read(//Users/awhkpd/Desktop/nuxt-chat-recording/app/components/**)",
+      "Read(//c/Users/awhkpd/Desktop/nuxt-chat-recording/app/components/**)",
+      "Bash(find /Users/awhkpd/Desktop/nuxt-chat-recording -name \"*.vue\" -type f 2>/dev/null | head -20)",
+      "Read(//Users/awhkpd/Desktop/**)",
+      "Bash(ls -la /Users/awhkpd/ 2>&1)",
+      "Read(//Users/**)"
+    ]
+  }
+}
