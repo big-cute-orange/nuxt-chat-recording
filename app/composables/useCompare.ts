@@ -10,6 +10,10 @@ export interface ICompareResponse {
     b: ICompareResult;
 }
 
+export function isCompareError(r: IMeetingSummary | { error: string }): r is { error: string } {
+    return 'error' in r;
+}
+
 export function useCompare() {
     const results = ref<ICompareResponse | null>(null);
     const loading = ref(false);
@@ -46,10 +50,5 @@ export function useCompare() {
         error.value = null;
     }
 
-    // Helper: check if a result is an error
-    function isError(r: IMeetingSummary | { error: string }): r is { error: string } {
-        return 'error' in r;
-    }
-
-    return { compare, results, loading, error, reset, isError };
+    return { compare, results, loading, error, reset, isError: isCompareError };
 }
