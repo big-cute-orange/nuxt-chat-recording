@@ -27,9 +27,13 @@ Return this exact JSON structure — no markdown, no code blocks, just raw JSON:
 
 const TRANSCRIPT_PROMPT = `You are an expert meeting analyst. Analyze the provided meeting transcript and extract structured information.
 
+Detect the primary language of the input and write all text fields (summary, task descriptions, decisions, topics, etc.) in that same language.
+
 You MUST respond with valid JSON only.${JSON_SCHEMA}`;
 
 const FREE_NOTES_PROMPT = `You are an expert meeting assistant. The user has provided raw, unstructured notes taken during a meeting. These may be bullet points, fragments, abbreviations, shorthand, or stream-of-consciousness text — not a clean transcript.
+
+Detect the primary language of the input and write all text fields (summary, task descriptions, decisions, topics, etc.) in that same language.
 
 Your job is to interpret these notes intelligently and reconstruct the meeting structure:
 - Infer who was likely present from any names, roles, or initials mentioned

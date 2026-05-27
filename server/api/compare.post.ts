@@ -3,6 +3,8 @@ import { defineEventHandler, readBody, createError, type H3Event } from 'h3';
 
 const SYSTEM_PROMPT = `You are an expert meeting analyst. Analyze the provided meeting transcript and extract structured information.
 
+Detect the primary language of the input and write all text fields (summary, task descriptions, decisions, topics, etc.) in that same language.
+
 You MUST respond with valid JSON only. No markdown, no code blocks, just raw JSON.
 
 Return this exact structure:
