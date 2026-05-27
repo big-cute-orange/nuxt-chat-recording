@@ -200,7 +200,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onClickOutside));
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 34px;
+    height: 38px;
     padding: 0 14px;
     background: var(--accent);
     color: #fff;

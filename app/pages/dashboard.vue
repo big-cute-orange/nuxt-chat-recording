@@ -1,167 +1,49 @@
 <script setup lang="ts">
-import type { IHistoryEntry, TProvider, IMeetingSummary } from '~/types/index';
+import type { TProvider } from '~/types/index';
 
-// ── 加载历史记录 ────────────────────────────────────────────────────────────────
-const { history, total: historyTotal, load: historyLoad } = useHistory();
-
-onMounted(() => historyLoad());
+const { data: stats } = useFetch('/api/dashboard/stats');
 
 // ── 计算指标 ──────────────────────────────────────────────────────────────────
-// historyTotal 反映服务器端完整数量，而非仅当前加载的页数
-const totalMeetings = computed(() => historyTotal.value);
-const totalActionItems = computed(() => history.value.reduce((sum: number, e: IHistoryEntry) => sum + e.summary.actionItems.length, 0));
-const totalDecisions = computed(() => history.value.reduce((sum: number, e: IHistoryEntry) => sum + e.summary.decisions.length, 0));
-const totalParticipants = computed(() => {
-    const names = new Set<string>();
-
-    history.value.forEach((e: IHistoryEntry) => e.summary.participants.forEach((p: string) => names.add(p)));
-
-    return names.size;
-});
-
-// 按负责人统计行动项 — 按数量降序排列
-const actionsByOwner = computed(() => {
-    const counts: Record<string, number> = {};
-
-    history.value.forEach((e: IHistoryEntry) =>
-        e.summary.actionItems.forEach((item: IMeetingSummary['actionItems'][number]) => {
-            const owner = item.owner || 'Unassigned';
-
-            counts[owner] = (counts[owner] ?? 0) + 1;
-        })
-    );
-
-    return Object.entries(counts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 8);
-});
-
+const totalMeetings = computed(() => stats.value?.totalMeetings ?? 0);
+const totalActionItems = computed(() => stats.value?.totalActionItems ?? 0);
+const totalDecisions = computed(() => stats.value?.totalDecisions ?? 0);
+const totalParticipants = computed(() => stats.value?.totalParticipants ?? 0);
+const actionsByOwner = computed(() => stats.value?.actionsByOwner ?? []);
 const maxOwnerCount = computed(() => actionsByOwner.value[0]?.[1] ?? 1);
-
-// AI 提供商使用情况
-const providerUsage = computed(() => {
-    const counts: Record<string, number> = {};
-
-    history.value.forEach((e: IHistoryEntry) => {
-        counts[e.provider] = (counts[e.provider] ?? 0) + 1;
-    });
-
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
-});
-
-// 所有会议的高频话题
-const topTopics = computed(() => {
-    const counts: Record<string, number> = {};
-
-    history.value.forEach((e: IHistoryEntry) =>
-        e.summary.keyTopics.forEach((t: string) => {
-            const key = t.toLowerCase();
-
-            counts[key] = (counts[key] ?? 0) + 1;
-        })
-    );
-
-    return Object.entries(counts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 12);
-});
-
-// 会议类型分布
-const meetingTypes = computed(() => {
-    const counts: Record<string, number> = {};
-
-    history.value.forEach((e: IHistoryEntry) => {
-        counts[e.meetingType] = (counts[e.meetingType] ?? 0) + 1;
-    });
-
-    return Object.entries(counts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 6);
-});
-
-// 所有行动项的优先级分布
-const priorityBreakdown = computed(() => {
-    const counts = { high: 0, medium: 0, low: 0 };
-
-    history.value.forEach((e: IHistoryEntry) =>
-        e.summary.actionItems.forEach((item: IMeetingSummary['actionItems'][number]) => {
-            if (item.priority in counts) counts[item.priority as keyof typeof counts]++;
-        })
-    );
-    const total = counts.high + counts.medium + counts.low || 1;
-
-    return [
-        { label: 'High', count: counts.high, pct: Math.round((counts.high / total) * 100), color: '#dc2626', bg: 'rgba(220,38,38,0.12)' },
-        {
-            label: 'Medium',
-            count: counts.medium,
-            pct: Math.round((counts.medium / total) * 100),
-            color: '#d97706',
-            bg: 'rgba(217,119,6,0.12)',
-        },
-        { label: 'Low', count: counts.low, pct: Math.round((counts.low / total) * 100), color: '#16a34a', bg: 'rgba(22,163,74,0.12)' },
-    ];
-});
-
-// 近 14 天每日会议数 — 用于迷你柱状图
-const activityData = computed(() => {
-    const days: Record<string, number> = {};
-
-    // 初始化近 14 天的数据为 0
-    for (let i = 13; i >= 0; i--) {
-        const d = new Date();
-
-        d.setDate(d.getDate() - i);
-        days[d.toISOString().slice(0, 10)] = 0;
-    }
-
-    history.value.forEach((e: IHistoryEntry) => {
-        const day = e.date.slice(0, 10);
-
-        if (day in days) {
-            days[day] = (days[day] ?? 0) + 1;
-        }
-    });
-
-    return Object.entries(days).map(([date, count]) => ({ date, count }));
-});
-
-const maxActivity = computed(() => Math.max(...activityData.value.map((d: { count: number }) => d.count), 1));
-
-// 最近 5 条会议记录
-const recentMeetings = computed(() => history.value.slice(0, 5));
+const providerUsage = computed(() => stats.value?.providerUsage ?? []);
+const topTopics = computed(() => stats.value?.topTopics ?? []);
+const meetingTypes = computed(() => stats.value?.meetingTypes ?? []);
+const priorityBreakdown = computed(() => stats.value?.priorityBreakdown ?? []);
+const activityData = computed(() => stats.value?.activityData ?? []);
+const maxActivity = computed(() => Math.max(...activityData.value.map(d => d.count), 1));
+const recentMeetings = computed(() => stats.value?.recentMeetings ?? []);
 
 // ── 工具函数 ───────────────────────────────────────────────────────────────────
 const providerLabels: Record<TProvider, string> = {
-    gemini: 'Gemini',
-    anthropic: 'Claude',
-    openai: 'GPT-4o',
+    deepseek: 'DeepSeek',
+    qwen: '通义千问',
+    doubao: '豆包',
 };
 
 const providerColors: Record<TProvider, string> = {
-    gemini: '#2563eb',
-    anthropic: '#dc2626',
-    openai: '#16a34a',
+    deepseek: '#2563eb',
+    qwen: '#7c3aed',
+    doubao: '#0891b2',
 };
 
 function formatRelative(iso: string) {
     const diff = Date.now() - new Date(iso).getTime();
     const mins = Math.floor(diff / 60000);
 
-    if (mins < 60) {
-        return `${mins}m ago`;
-    }
+    if (mins < 60) return `${mins}m ago`;
 
     const hours = Math.floor(mins / 60);
 
-    if (hours < 24) {
-        return `${hours}h ago`;
-    }
+    if (hours < 24) return `${hours}h ago`;
 
     return `${Math.floor(hours / 24)}d ago`;
 }
 
-// 活动图表柱高百分比（最高不超过列高 100%）
 function barHeight(count: number) {
     return Math.max((count / maxActivity.value) * 100, count > 0 ? 8 : 0);
 }
@@ -222,7 +104,7 @@ function getProviderLabel(provider: string): string {
                     </div>
                     <div class="kpi-card">
                         <span class="kpi-value">{{ totalDecisions }}</span>
-                        <span class="kpi-label">决策总数</span>
+                        <span class="kpi-label">决策事项总数</span>
                     </div>
                     <div class="kpi-card">
                         <span class="kpi-value">{{ totalParticipants }}</span>
@@ -280,7 +162,7 @@ function getProviderLabel(provider: string): string {
                     <div v-if="actionsByOwner.length" class="card">
                         <div class="card-header">
                             <span class="card-icon">👤</span>
-                            <h2 class="card-title">责任人行动项</h2>
+                            <h2 class="card-title">相关责任人的行动项总数</h2>
                         </div>
                         <div class="owner-list">
                             <div v-for="[owner, count] in actionsByOwner" :key="owner" class="owner-row">
@@ -304,7 +186,6 @@ function getProviderLabel(provider: string): string {
                                 <div v-for="[prov, count] in providerUsage" :key="prov" class="provider-row">
                                     <span class="provider-dot" :style="{ background: getProviderColor(prov) }" />
                                     <span class="provider-name-label">{{ getProviderLabel(prov) }}</span>
-                                    <span class="provider-count-label">{{ count }} meeting{{ count !== 1 ? 's' : '' }}</span>
                                     <div class="provider-bar-track">
                                         <div
                                             class="provider-bar-fill"
@@ -314,6 +195,7 @@ function getProviderLabel(provider: string): string {
                                             }"
                                         />
                                     </div>
+                                    <span class="provider-count-label">{{ count }} 次会议</span>
                                 </div>
                             </div>
                         </div>
@@ -366,9 +248,9 @@ function getProviderLabel(provider: string): string {
                                 <span class="recent-date">{{ formatRelative(entry.date) }}</span>
                             </div>
                             <div class="recent-meta">
-                                <span class="recent-stat">{{ entry.summary.participants.length }} 参与人</span>
-                                <span class="recent-stat">{{ entry.summary.actionItems.length }} 行动项</span>
-                                <span class="recent-stat">{{ entry.summary.decisions.length }} 关键决策</span>
+                                <span class="recent-stat">{{ entry.participantCount }} 参与人</span>
+                                <span class="recent-stat">{{ entry.actionItemCount }} 行动项</span>
+                                <span class="recent-stat">{{ entry.decisionCount }} 决策事项</span>
                                 <span class="recent-provider" :style="{ color: getProviderColor(entry.provider) }">
                                     {{ getProviderLabel(entry.provider) }}
                                 </span>
@@ -789,7 +671,7 @@ function getProviderLabel(provider: string): string {
 .provider-name-label {
     font-size: 13px;
     font-weight: 600;
-    width: 60px;
+    width: 76px;
     flex-shrink: 0;
 }
 
@@ -797,8 +679,9 @@ function getProviderLabel(provider: string): string {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
     color: var(--text-muted);
-    width: 70px;
+    width: 56px;
     flex-shrink: 0;
+    text-align: right;
 }
 
 .provider-bar-track {
