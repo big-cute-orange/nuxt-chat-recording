@@ -61,7 +61,6 @@ const transcribeStep = ref<'idle' | 'uploading' | 'done'>('idle');
 const fileName = ref('');
 const dragOver = ref(false);
 const transcriptExpanded = ref(false);
-const historyOpen = ref(false);
 
 // ── Edit mode ─────────────────────────────────────────────────────────────────
 const editing = ref(false);
@@ -194,7 +193,6 @@ function openHistoryEntry(entry: IHistoryEntry) {
     activeHistoryId.value = entry.id;
     submittedText.value = entry.transcript;
     transcriptExpanded.value = false;
-    historyOpen.value = false;
     provider.value = entry.provider;
     mode.value = 'single';
     reset();
@@ -517,7 +515,7 @@ function downloadMarkdown(s: IMeetingSummary, prov?: string) {
     const a = document.createElement('a');
 
     a.href = url;
-    a.download = `meeting-summary-${s.meetingType.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.md`;
+    a.download = `${s.meetingType.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.md`;
     a.click();
     URL.revokeObjectURL(url);
     flashCopied('download');
@@ -530,11 +528,6 @@ const priorityConfig = {
     low: { label: 'Low', color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
 };
 
-// const providers: { id: TProvider; label: string }[] = [
-//     { id: 'gemini', label: 'Gemini' },
-//     { id: 'anthropic', label: 'Claude' },
-//     { id: 'openai', label: 'GPT-4o' },
-// ];
 const providers = [
     { id: 'deepseek', label: 'DeepSeek' },
     { id: 'qwen', label: '通义千问' },
@@ -626,74 +619,38 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
 
 <template>
     <div class="app">
-        <!-- ── History sidebar ────────────────────────────────────── -->
-        <Transition name="sidebar">
-            <aside v-if="historyOpen" class="sidebar">
-                <div class="sidebar-header">
-                    <h2 class="sidebar-title">历史记录</h2>
-                    <div class="sidebar-actions">
-                        <button v-if="history.length" class="sidebar-clear" @click="historyClear">清空全部</button>
-                        <button class="sidebar-close" @click="historyOpen = false">✕</button>
-                    </div>
-                </div>
-                <div v-if="!history.length" class="sidebar-empty">暂无会议摘要，开始分析会议内容吧</div>
-                <ul v-else class="history-list">
-                    <li
-                        v-for="entry in history"
-                        :key="entry.id"
-                        :class="['history-item', activeHistoryId === entry.id ? 'active' : '']"
-                        @click="openHistoryEntry(entry)"
-                    >
-                        <div class="history-item-main">
-                            <span class="history-meeting-type">{{ entry.meetingType }}</span>
-                            <button class="history-delete" @click.stop="onDeleteHistoryEntry(entry.id)">✕</button>
-                        </div>
-                        <div class="history-item-meta">
-                            <span class="history-date">{{ formatDate(entry.date, true) }}</span>
-                            <span class="history-provider">{{ providerName(entry.provider) }}</span>
-                        </div>
-                        <div class="history-item-stats">
-                            <span>{{ entry.summary?.participants?.length ?? 0 }} 参会人员</span>
-                            <span>{{ entry.summary?.actionItems?.length ?? 0 }} 行动项</span>
-                            <span>{{ entry.charCount.toLocaleString() }} 字符数</span>
-                        </div>
-                    </li>
-                </ul>
-                <div v-if="historyHasMore" class="sidebar-load-more">
-                    <button class="load-more-btn" :disabled="historyLoading" @click="historyLoadMore">
-                        {{ historyLoading ? 'Loading…' : 'Load more' }}
-                    </button>
-                </div>
-            </aside>
-        </Transition>
-        <Transition name="fade">
-            <div v-if="historyOpen" class="sidebar-backdrop" @click="historyOpen = false" />
-        </Transition>
-
         <!-- ── Header ─────────────────────────────────────────────── -->
         <header class="header">
             <div class="header-inner">
                 <div class="logo">
                     <span class="logo-icon">◈</span>
-                    <span class="logo-text">MinutAI</span>
+                    <span class="logo-text">AI</span>
                     <span class="logo-tag">智能会议纪要助手</span>
                 </div>
                 <div class="header-right">
-                    <!-- <NuxtLink to="/dashboard" class="history-btn">
+                    <NuxtLink to="/dashboard" class="history-btn">
                         <span class="history-btn-icon">▤</span>
-                        Dashboard
-                    </NuxtLink> -->
+                        数据看板
+                    </NuxtLink>
 
                     <!-- <NuxtLink to="/integrations" class="history-btn">
                         <span class="history-btn-icon">⇄</span>
                         Integrations
                     </NuxtLink> -->
 
-                    <button class="history-btn" @click="historyOpen = true">
-                        <span class="history-btn-icon">◷</span>
-                        历史记录
-                        <span v-if="historyTotal" class="history-count">{{ historyTotal }}</span>
-                    </button>
+                    <HistorySidebar
+                        :history="history"
+                        :history-total="historyTotal"
+                        :active-history-id="activeHistoryId"
+                        :history-has-more="historyHasMore"
+                        :history-loading="historyLoading"
+                        :provider-name="providerName"
+                        :format-date="formatDate"
+                        @clear="historyClear"
+                        @load-more="historyLoadMore"
+                        @open-entry="openHistoryEntry"
+                        @delete-entry="onDeleteHistoryEntry"
+                    />
 
                     <!-- Mode toggle -->
                     <div class="mode-toggle">
@@ -733,7 +690,6 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                             <span v-else-if="compareProviders[1] === p.id" class="compare-label">B</span>
                         </button>
                     </div>
-
                     <AuthButton />
                 </div>
             </div>
@@ -781,7 +737,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                     </div>
 
                     <div v-if="inputMode === 'paste'" class="input-area">
-                        <textarea v-model="transcriptText" class="textarea" placeholder="Paste your meeting transcript here..." rows="12" />
+                        <textarea v-model="transcriptText" class="textarea" placeholder="请在此粘贴会议纪要原文..." rows="12" />
                         <div class="textarea-footer">
                             <span class="char-count">{{ transcriptText.length.toLocaleString() }} 字符数</span>
                         </div>
@@ -892,15 +848,15 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                         <span v-if="!isLoading">
                             {{
                                 mode === 'compare'
-                                    ? `Compare ${providerName(compareProviders[0])} vs ${providerName(compareProviders[1])} →`
+                                    ? `对比 ${providerName(compareProviders[0])} vs ${providerName(compareProviders[1])} →`
                                     : inputMode === 'free-notes'
                                       ? 'Structure my notes →'
-                                      : 'Analyze meeting →'
+                                      : '分析会议 →'
                             }}
                         </span>
                         <span v-else class="loading-state">
                             <span class="spinner" />
-                            {{ mode === 'single' ? `Processing... ${progress}%` : 'Comparing providers...' }}
+                            {{ mode === 'single' ? `分析中... ${progress}%` : '正在对比模型结果...' }}
                         </span>
                     </button>
 
@@ -921,13 +877,13 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                 <span class="provider-badge">通过 {{ providerLabel }}</span>
                             </template>
                             <template v-else-if="draft">
-                                <input v-model="draft.meetingType" class="edit-meeting-type" placeholder="Meeting type" />
+                                <input v-model="draft.meetingType" class="edit-meeting-type" placeholder="会议类型" />
                                 <span class="editing-indicator">✎ 编辑</span>
                             </template>
                         </div>
                         <div class="results-actions">
                             <template v-if="!editing">
-                                <button class="edit-btn" title="Edit results" @click="startEditing">✎ Edit</button>
+                                <button class="edit-btn" title="Edit results" @click="startEditing">✎ 编辑</button>
                                 <button class="reset-btn" @click="handleReset">← 新建会议</button>
                             </template>
                             <template v-else>
@@ -1038,21 +994,21 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                 </div>
                             </div>
                             <!-- Export all to calendar -->
-                            <div v-if="itemsWithDeadlines(result.actionItems) > 1" class="cal-export-row">
+                            <!-- <div v-if="itemsWithDeadlines(result.actionItems) > 1" class="cal-export-row">
                                 <span class="cal-export-label">全部添加 {{ itemsWithDeadlines(result.actionItems) }} deadlines to:</span>
-                                <!-- <button
+                                <button
                                     class="cal-export-btn gcal-btn"
                                     @click="openAllInCalendar(result.actionItems, result.meetingType, 'google')"
                                 >
                                     Google Calendar
-                                </button> -->
-                                <!-- <button
+                                </button>
+                                <button
                                     class="cal-export-btn outlook-btn"
                                     @click="openAllInCalendar(result.actionItems, result.meetingType, 'outlook')"
                                 >
                                     Outlook
-                                </button> -->
-                            </div>
+                                </button>
+                            </div> -->
                         </div>
                         <!-- Edit mode -->
                         <div v-else-if="draft" class="edit-action-items">
@@ -1077,7 +1033,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                     <input v-model="item.deadline" class="edit-input edit-meta-input" placeholder="Deadline" />
                                 </div>
                             </div>
-                            <button class="add-item-btn" @click="addActionItem">+ Add action item</button>
+                            <button class="add-item-btn" @click="addActionItem">+ 添加行动项</button>
                         </div>
                     </div>
 
@@ -1085,7 +1041,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                     <div class="card">
                         <div class="card-header">
                             <span class="card-icon">◈</span>
-                            <h2 class="card-title">Decisions Made</h2>
+                            <h2 class="card-title">关键决策</h2>
                             <span class="card-count">{{ editing ? draft?.decisions.length : result.decisions.length }}</span>
                         </div>
                         <!-- View mode -->
@@ -1118,23 +1074,23 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                     <div v-if="!editing" class="card">
                         <div class="card-header">
                             <span class="card-icon">↗</span>
-                            <h2 class="card-title">Export</h2>
+                            <h2 class="card-title">导出</h2>
                         </div>
                         <div class="export-actions">
                             <button class="export-btn" @click="copyToClipboard(buildMarkdown(result), 'markdown')">
                                 <span class="export-btn-icon">◻</span>
-                                <span class="export-btn-label">Copy as Markdown</span>
-                                <span class="export-btn-confirm" :class="{ visible: copiedKey === 'markdown' }">✓ Copied!</span>
+                                <span class="export-btn-label">复制为 Markdown</span>
+                                <span class="export-btn-confirm" :class="{ visible: copiedKey === 'markdown' }">✓ 已复制!</span>
                             </button>
                             <button class="export-btn" @click="downloadMarkdown(result)">
                                 <span class="export-btn-icon">↓</span>
-                                <span class="export-btn-label">Download .md file</span>
-                                <span class="export-btn-confirm" :class="{ visible: copiedKey === 'download' }">✓ Done!</span>
+                                <span class="export-btn-label">下载 .md 文件</span>
+                                <span class="export-btn-confirm" :class="{ visible: copiedKey === 'download' }">✓ 完成!</span>
                             </button>
                             <button class="export-btn" @click="copyToClipboard(buildEmail(result), 'email')">
                                 <span class="export-btn-icon">✉</span>
-                                <span class="export-btn-label">Copy follow-up email</span>
-                                <span class="export-btn-confirm" :class="{ visible: copiedKey === 'email' }">✓ Copied!</span>
+                                <span class="export-btn-label">复制跟进邮件</span>
+                                <span class="export-btn-confirm" :class="{ visible: copiedKey === 'email' }">✓ 已复制!</span>
                             </button>
                         </div>
                     </div>
@@ -1183,8 +1139,8 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                         <button class="transcript-toggle" @click="transcriptExpanded = !transcriptExpanded">
                             <div class="card-header" style="margin-bottom: 0">
                                 <span class="card-icon">≡</span>
-                                <h2 class="card-title">Original Transcript</h2>
-                                <span class="card-count">{{ submittedText.length.toLocaleString() }} chars</span>
+                                <h2 class="card-title">会议纪要原文</h2>
+                                <span class="card-count">{{ submittedText.length.toLocaleString() }} 字符数</span>
                                 <span class="expand-arrow" :class="{ rotated: transcriptExpanded }">▾</span>
                             </div>
                         </button>
@@ -1202,9 +1158,9 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                 <section v-if="compareResults && mode === 'compare'" class="compare-section">
                     <div class="results-header">
                         <div class="results-meta">
-                            <span class="meeting-type-badge">Compare mode</span>
+                            <span class="meeting-type-badge">对比模式</span>
                         </div>
-                        <button class="reset-btn" @click="handleReset">← New meeting</button>
+                        <button class="reset-btn" @click="handleReset">← 新建会议</button>
                     </div>
 
                     <!-- Side by side columns -->
@@ -1224,7 +1180,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                             <!-- Result -->
                             <template v-else>
                                 <div :key="side" class="compare-result">
-                                    <!-- Meeting type -->
+                                    <!-- 会议类型 -->
                                     <div
                                         class="compare-field"
                                         :class="{
@@ -1234,7 +1190,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                             ),
                                         }"
                                     >
-                                        <span class="compare-field-label">Meeting type</span>
+                                        <span class="compare-field-label">会议类型</span>
                                         <span class="compare-field-value">{{ getCompareMeetingType(side) }}</span>
                                     </div>
 
@@ -1248,7 +1204,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                             ),
                                         }"
                                     >
-                                        <span class="compare-field-label">Key topics</span>
+                                        <span class="compare-field-label">讨论主题</span>
                                         <div class="compare-chips">
                                             <span v-for="t in getCompareKeyTopics(side)" :key="t" class="chip chip-purple">
                                                 {{ t }}
@@ -1266,7 +1222,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                             ),
                                         }"
                                     >
-                                        <span class="compare-field-label">Summary</span>
+                                        <span class="compare-field-label">执行摘要</span>
                                         <p class="compare-summary">{{ getCompareSummary(side) }}</p>
                                     </div>
 
@@ -1283,7 +1239,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                         }"
                                     >
                                         <span class="compare-field-label">
-                                            Action Items
+                                            行动项
                                             <span class="compare-count-badge">
                                                 {{ getCompareActionItems(side).length }}
                                             </span>
@@ -1318,7 +1274,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                         }"
                                     >
                                         <span class="compare-field-label">
-                                            Decisions
+                                            关键决策
                                             <span class="compare-count-badge">
                                                 {{ getCompareDecisionsLength(side) }}
                                             </span>
@@ -1337,7 +1293,7 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
 
                                     <!-- Export (per column) -->
                                     <div class="compare-field">
-                                        <span class="compare-field-label">Export</span>
+                                        <span class="compare-field-label">导出</span>
                                         <div class="export-actions">
                                             <button
                                                 v-if="getCompareResultAsAny(side) && compareResults"
@@ -1355,9 +1311,9 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                                 "
                                             >
                                                 <span class="export-btn-icon">◻</span>
-                                                <span class="export-btn-label">Copy Markdown</span>
+                                                <span class="export-btn-label">复制为 Markdown</span>
                                                 <span class="export-btn-confirm" :class="{ visible: copiedKey === `md-${side}` }">
-                                                    ✓ Copied!
+                                                    ✓ 已复制!
                                                 </span>
                                             </button>
                                             <button
@@ -1373,9 +1329,9 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                                                 "
                                             >
                                                 <span class="export-btn-icon">↓</span>
-                                                <span class="export-btn-label">Download .md</span>
+                                                <span class="export-btn-label">下载 .md 文件</span>
                                                 <span class="export-btn-confirm" :class="{ visible: copiedKey === 'download' }">
-                                                    ✓ Done!
+                                                    ✓ 已完成!
                                                 </span>
                                             </button>
                                         </div>
@@ -1390,8 +1346,8 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                         <button class="transcript-toggle" @click="transcriptExpanded = !transcriptExpanded">
                             <div class="card-header" style="margin-bottom: 0">
                                 <span class="card-icon">≡</span>
-                                <h2 class="card-title">Original Transcript</h2>
-                                <span class="card-count">{{ submittedText.length.toLocaleString() }} chars</span>
+                                <h2 class="card-title">会议纪要原文</h2>
+                                <span class="card-count">{{ submittedText.length.toLocaleString() }} 字符数</span>
                                 <span class="expand-arrow" :class="{ rotated: transcriptExpanded }">▾</span>
                             </div>
                         </button>
@@ -1404,11 +1360,6 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
                 </section>
             </Transition>
         </main>
-
-        <!-- ── Footer ─────────────────────────────────────────────── -->
-        <!-- <footer class="footer">
-            <span>MinutAI · Portfolio demo · Nuxt 4 + AI APIs</span>
-        </footer> -->
     </div>
 </template>
 
@@ -1419,8 +1370,36 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
     flex-direction: column;
 }
 
+/* ── Header nav buttons ──────────────────────────────────────── */
+.history-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-family: Syne, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.history-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.history-btn-icon {
+    font-size: 15px;
+}
+
 /* ── Sidebar ─────────────────────────────────────────────────── */
-.sidebar {
+/* .sidebar {
     position: fixed;
     top: 0;
     right: 0;
@@ -1432,30 +1411,30 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-}
+} */
 
-.sidebar-header {
+/* .sidebar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 20px 20px 16px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-}
+} */
 
-.sidebar-title {
+/* .sidebar-title {
     font-size: 15px;
     font-weight: 700;
     letter-spacing: -0.3px;
-}
+} */
 
-.sidebar-actions {
+/* .sidebar-actions {
     display: flex;
     gap: 8px;
     align-items: center;
-}
+} */
 
-.sidebar-clear {
+/* .sidebar-clear {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
     color: var(--text-muted);
@@ -1492,103 +1471,6 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
     font-size: 13px;
     color: var(--text-muted);
     line-height: 1.6;
-}
-
-.history-list {
-    list-style: none;
-    overflow-y: auto;
-    flex: 1;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.history-item {
-    padding: 12px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--bg-card);
-    cursor: pointer;
-    transition: all 0.15s;
-}
-
-.history-item:hover {
-    border-color: var(--border-bright);
-    background: var(--bg-hover);
-}
-
-.history-item.active {
-    border-color: var(--accent-soft);
-    background: var(--accent-glow);
-}
-
-.history-item-main {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 6px;
-}
-
-.history-meeting-type {
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.3;
-    flex: 1;
-    margin-right: 8px;
-}
-
-.history-delete {
-    background: none;
-    border: none;
-    color: var(--text-dim);
-    cursor: pointer;
-    font-size: 11px;
-    padding: 2px 4px;
-    border-radius: 3px;
-    flex-shrink: 0;
-    transition: color 0.2s;
-}
-
-.history-delete:hover {
-    color: var(--red);
-}
-
-.history-item-meta {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 6px;
-}
-
-.history-date {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--text-muted);
-}
-
-.history-provider {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--accent);
-    background: var(--accent-glow);
-    padding: 1px 6px;
-    border-radius: 10px;
-}
-
-.history-item-stats {
-    display: flex;
-    gap: 8px;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--text-dim);
-}
-
-.sidebar-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgb(0 0 0 / 50%);
-    z-index: 199;
 }
 
 /* ── Header ──────────────────────────────────────────────────── */
@@ -1645,44 +1527,6 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
-}
-
-.history-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text-muted);
-    font-family: Syne, sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    text-decoration: none;
-}
-
-.history-btn:hover {
-    border-color: var(--accent);
-    color: var(--text);
-}
-
-.history-btn-icon {
-    font-size: 15px;
-}
-
-.history-count {
-    background: var(--accent-soft);
-    color: white;
-    font-size: 10px;
-    font-family: 'DM Mono', monospace;
-    padding: 1px 6px;
-    border-radius: 10px;
-    min-width: 18px;
-    text-align: center;
 }
 
 /* Mode toggle */
@@ -3263,26 +3107,6 @@ function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
 .fade-up-enter-from {
     opacity: 0;
     transform: translateY(16px);
-}
-
-.sidebar-enter-active,
-.sidebar-leave-active {
-    transition: transform 0.3s ease;
-}
-
-.sidebar-enter-from,
-.sidebar-leave-to {
-    transform: translateX(100%);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
 }
 
 .expand-enter-active,
