@@ -53,7 +53,7 @@ const enabledCount = computed(
             <div class="header-inner">
                 <NuxtLink to="/" class="logo">
                     <span class="logo-icon">◈</span>
-                    <span class="logo-text">MinutAI</span>
+                    <span class="logo-text">AI</span>
                     <span class="logo-tag">meeting intelligence</span>
                 </NuxtLink>
                 <nav class="nav">
@@ -340,11 +340,6 @@ const enabledCount = computed(
                 </button>
             </div>
         </main>
-
-        <!-- ── Footer ─────────────────────────────────────────────── -->
-        <footer class="footer">
-            <span>MinutAI · Portfolio demo · Nuxt 4 + AI APIs</span>
-        </footer>
     </div>
 </template>
 

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import type { IHistoryEntry, TProvider, IMeetingSummary } from '~/types/index';
 
-// ── Load history ──────────────────────────────────────────────────────────────
+// ── 加载历史记录 ────────────────────────────────────────────────────────────────
 const { history, total: historyTotal, load: historyLoad } = useHistory();
 
 onMounted(() => historyLoad());
 
-// ── Computed metrics ──────────────────────────────────────────────────────────
-// historyTotal reflects the full count from the server, not just the loaded page
+// ── 计算指标 ──────────────────────────────────────────────────────────────────
+// historyTotal 反映服务器端完整数量，而非仅当前加载的页数
 const totalMeetings = computed(() => historyTotal.value);
 const totalActionItems = computed(() => history.value.reduce((sum: number, e: IHistoryEntry) => sum + e.summary.actionItems.length, 0));
 const totalDecisions = computed(() => history.value.reduce((sum: number, e: IHistoryEntry) => sum + e.summary.decisions.length, 0));
@@ -19,7 +19,7 @@ const totalParticipants = computed(() => {
     return names.size;
 });
 
-// Action items per owner — sorted by count desc
+// 按负责人统计行动项 — 按数量降序排列
 const actionsByOwner = computed(() => {
     const counts: Record<string, number> = {};
 
@@ -38,7 +38,7 @@ const actionsByOwner = computed(() => {
 
 const maxOwnerCount = computed(() => actionsByOwner.value[0]?.[1] ?? 1);
 
-// Provider usage
+// AI 提供商使用情况
 const providerUsage = computed(() => {
     const counts: Record<string, number> = {};
 
@@ -49,7 +49,7 @@ const providerUsage = computed(() => {
     return Object.entries(counts).sort((a, b) => b[1] - a[1]);
 });
 
-// Top topics across all meetings
+// 所有会议的高频话题
 const topTopics = computed(() => {
     const counts: Record<string, number> = {};
 
@@ -66,7 +66,7 @@ const topTopics = computed(() => {
         .slice(0, 12);
 });
 
-// Meeting types distribution
+// 会议类型分布
 const meetingTypes = computed(() => {
     const counts: Record<string, number> = {};
 
@@ -79,7 +79,7 @@ const meetingTypes = computed(() => {
         .slice(0, 6);
 });
 
-// Priority breakdown across all action items
+// 所有行动项的优先级分布
 const priorityBreakdown = computed(() => {
     const counts = { high: 0, medium: 0, low: 0 };
 
@@ -103,11 +103,11 @@ const priorityBreakdown = computed(() => {
     ];
 });
 
-// Meetings per day over last 14 days — for the sparkline
+// 近 14 天每日会议数 — 用于迷你柱状图
 const activityData = computed(() => {
     const days: Record<string, number> = {};
 
-    // Initialise all 14 days to 0
+    // 初始化近 14 天的数据为 0
     for (let i = 13; i >= 0; i--) {
         const d = new Date();
 
@@ -128,10 +128,10 @@ const activityData = computed(() => {
 
 const maxActivity = computed(() => Math.max(...activityData.value.map((d: { count: number }) => d.count), 1));
 
-// Recent meetings (last 5)
+// 最近 5 条会议记录
 const recentMeetings = computed(() => history.value.slice(0, 5));
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── 工具函数 ───────────────────────────────────────────────────────────────────
 const providerLabels: Record<TProvider, string> = {
     gemini: 'Gemini',
     anthropic: 'Claude',
@@ -161,7 +161,7 @@ function formatRelative(iso: string) {
     return `${Math.floor(hours / 24)}d ago`;
 }
 
-// Bar width % for the activity chart (capped at 100% of column height)
+// 活动图表柱高百分比（最高不超过列高 100%）
 function barHeight(count: number) {
     return Math.max((count / maxActivity.value) * 100, count > 0 ? 8 : 0);
 }
@@ -177,66 +177,66 @@ function getProviderLabel(provider: string): string {
 
 <template>
     <div class="app">
-        <!-- ── Header ─────────────────────────────────────────────── -->
+        <!-- ── 顶部导航 ───────────────────────────────────────────────── -->
         <header class="header">
             <div class="header-inner">
                 <NuxtLink to="/" class="logo">
                     <span class="logo-icon">◈</span>
-                    <span class="logo-text">MinutAI</span>
-                    <span class="logo-tag">meeting intelligence</span>
+                    <span class="logo-text">AI</span>
+                    <span class="logo-tag">智能会议纪要助手</span>
                 </NuxtLink>
                 <nav class="nav">
-                    <NuxtLink to="/" class="nav-link">← Analyze</NuxtLink>
-                    <NuxtLink to="/integrations" class="nav-link">Integrations</NuxtLink>
-                    <span class="nav-active">Dashboard</span>
-                    <AuthButton />
+                    <NuxtLink to="/" class="nav-link">← 分析</NuxtLink>
+                    <!-- <NuxtLink to="/integrations" class="nav-link">Integrations</NuxtLink> -->
+                    <span class="nav-active">数据看板</span>
+                    <!-- <AuthButton /> -->
                 </nav>
             </div>
         </header>
 
-        <!-- ── Main ───────────────────────────────────────────────── -->
+        <!-- ── 主体内容 ──────────────────────────────────────────────── -->
         <main class="main">
-            <!-- Empty state -->
+            <!-- 空状态 -->
             <div v-if="!totalMeetings" class="empty-state">
                 <span class="empty-icon">◎</span>
-                <h2 class="empty-title">No data yet</h2>
-                <p class="empty-sub">Analyse a meeting first to see your dashboard.</p>
-                <NuxtLink to="/" class="empty-cta">Go analyse a meeting →</NuxtLink>
+                <h2 class="empty-title">暂无数据</h2>
+                <p class="empty-sub">先完成一次会议分析，即可查看你的数据看板</p>
+                <NuxtLink to="/" class="empty-cta">去分析一场会议 →</NuxtLink>
             </div>
 
             <template v-else>
                 <div class="page-title">
-                    <h1 class="title">Dashboard</h1>
-                    <p class="subtitle">Insights from {{ totalMeetings }} meeting{{ totalMeetings !== 1 ? 's' : '' }}</p>
+                    <h1 class="title">数据看板</h1>
+                    <p class="subtitle">{{ totalMeetings }} 场会议的关键洞察</p>
                 </div>
 
-                <!-- ── KPI row ──────────────────────────────────────────── -->
+                <!-- ── KPI 指标行 ────────────────────────────────────────── -->
                 <div class="kpi-grid">
                     <div class="kpi-card">
                         <span class="kpi-value">{{ totalMeetings }}</span>
-                        <span class="kpi-label">Meetings</span>
+                        <span class="kpi-label">会议总数</span>
                     </div>
                     <div class="kpi-card">
                         <span class="kpi-value">{{ totalActionItems }}</span>
-                        <span class="kpi-label">Action Items</span>
+                        <span class="kpi-label">行动项总数</span>
                     </div>
                     <div class="kpi-card">
                         <span class="kpi-value">{{ totalDecisions }}</span>
-                        <span class="kpi-label">Decisions</span>
+                        <span class="kpi-label">决策总数</span>
                     </div>
                     <div class="kpi-card">
                         <span class="kpi-value">{{ totalParticipants }}</span>
-                        <span class="kpi-label">Unique People</span>
+                        <span class="kpi-label">参与人数</span>
                     </div>
                 </div>
 
-                <!-- ── Activity chart + Priority breakdown ─────────────── -->
+                <!-- ── 活动图表 + 优先级分布 ───────────────────────────────── -->
                 <div class="row-2">
-                    <!-- Activity sparkline -->
+                    <!-- 活动迷你图 -->
                     <div class="card">
                         <div class="card-header">
                             <span class="card-icon">◎</span>
-                            <h2 class="card-title">Activity — last 14 days</h2>
+                            <h2 class="card-title">最近 14 天活动</h2>
                         </div>
                         <div class="sparkline">
                             <div
@@ -253,11 +253,11 @@ function getProviderLabel(provider: string): string {
                         </div>
                     </div>
 
-                    <!-- Priority breakdown -->
+                    <!-- 优先级分布 -->
                     <div class="card">
                         <div class="card-header">
                             <span class="card-icon">◉</span>
-                            <h2 class="card-title">Action Item Priorities</h2>
+                            <h2 class="card-title">行动项优先级</h2>
                         </div>
                         <div class="priority-breakdown">
                             <div v-for="p in priorityBreakdown" :key="p.label" class="priority-row">
@@ -274,13 +274,13 @@ function getProviderLabel(provider: string): string {
                     </div>
                 </div>
 
-                <!-- ── Action items by owner + Provider usage ──────────── -->
+                <!-- ── 按负责人统计行动项 + 提供商使用情况 ────────────────── -->
                 <div class="row-2">
-                    <!-- Actions by owner -->
+                    <!-- 按负责人统计行动项 -->
                     <div v-if="actionsByOwner.length" class="card">
                         <div class="card-header">
                             <span class="card-icon">👤</span>
-                            <h2 class="card-title">Actions by Person</h2>
+                            <h2 class="card-title">责任人行动项</h2>
                         </div>
                         <div class="owner-list">
                             <div v-for="[owner, count] in actionsByOwner" :key="owner" class="owner-row">
@@ -293,17 +293,17 @@ function getProviderLabel(provider: string): string {
                         </div>
                     </div>
 
-                    <!-- Provider usage + Meeting types -->
+                    <!-- 提供商使用情况 + 会议类型 -->
                     <div style="display: flex; flex-direction: column; gap: 16px">
                         <div v-if="providerUsage.length" class="card">
                             <div class="card-header">
                                 <span class="card-icon">◈</span>
-                                <h2 class="card-title">Provider Usage</h2>
+                                <h2 class="card-title">模型使用情况</h2>
                             </div>
                             <div class="provider-usage">
                                 <div v-for="[prov, count] in providerUsage" :key="prov" class="provider-row">
-                                            <span class="provider-dot" :style="{ background: getProviderColor(prov) }" />
-                                            <span class="provider-name-label">{{ getProviderLabel(prov) }}</span>
+                                    <span class="provider-dot" :style="{ background: getProviderColor(prov) }" />
+                                    <span class="provider-name-label">{{ getProviderLabel(prov) }}</span>
                                     <span class="provider-count-label">{{ count }} meeting{{ count !== 1 ? 's' : '' }}</span>
                                     <div class="provider-bar-track">
                                         <div
@@ -321,7 +321,7 @@ function getProviderLabel(provider: string): string {
                         <div v-if="meetingTypes.length" class="card">
                             <div class="card-header">
                                 <span class="card-icon">≡</span>
-                                <h2 class="card-title">Meeting Types</h2>
+                                <h2 class="card-title">会议类型</h2>
                             </div>
                             <div class="meeting-types">
                                 <div v-for="[type, count] in meetingTypes" :key="type" class="meeting-type-row">
@@ -333,11 +333,11 @@ function getProviderLabel(provider: string): string {
                     </div>
                 </div>
 
-                <!-- ── Top topics ───────────────────────────────────────── -->
+                <!-- ── 高频话题 ─────────────────────────────────────────── -->
                 <div v-if="topTopics.length" class="card">
                     <div class="card-header">
                         <span class="card-icon">◷</span>
-                        <h2 class="card-title">Top Topics Across All Meetings</h2>
+                        <h2 class="card-title">全部会议热门议题</h2>
                     </div>
                     <div class="topics-cloud">
                         <span
@@ -352,12 +352,12 @@ function getProviderLabel(provider: string): string {
                     </div>
                 </div>
 
-                <!-- ── Recent meetings ──────────────────────────────────── -->
+                <!-- ── 最近会议 ─────────────────────────────────────────── -->
                 <div class="card">
                     <div class="card-header">
                         <span class="card-icon">◷</span>
-                        <h2 class="card-title">Recent Meetings</h2>
-                        <NuxtLink to="/" class="card-link">View all →</NuxtLink>
+                        <h2 class="card-title">最近会议</h2>
+                        <NuxtLink to="/" class="card-link">查看全部 →</NuxtLink>
                     </div>
                     <div class="recent-list">
                         <div v-for="entry in recentMeetings" :key="entry.id" class="recent-item">
@@ -366,9 +366,9 @@ function getProviderLabel(provider: string): string {
                                 <span class="recent-date">{{ formatRelative(entry.date) }}</span>
                             </div>
                             <div class="recent-meta">
-                                <span class="recent-stat">{{ entry.summary.participants.length }} people</span>
-                                <span class="recent-stat">{{ entry.summary.actionItems.length }} actions</span>
-                                <span class="recent-stat">{{ entry.summary.decisions.length }} decisions</span>
+                                <span class="recent-stat">{{ entry.summary.participants.length }} 参与人</span>
+                                <span class="recent-stat">{{ entry.summary.actionItems.length }} 行动项</span>
+                                <span class="recent-stat">{{ entry.summary.decisions.length }} 关键决策</span>
                                 <span class="recent-provider" :style="{ color: getProviderColor(entry.provider) }">
                                     {{ getProviderLabel(entry.provider) }}
                                 </span>
@@ -378,11 +378,6 @@ function getProviderLabel(provider: string): string {
                 </div>
             </template>
         </main>
-
-        <!-- ── Footer ─────────────────────────────────────────────── -->
-        <footer class="footer">
-            <span>MinutAI · Portfolio demo · Nuxt 4 + AI APIs</span>
-        </footer>
     </div>
 </template>
 
@@ -393,7 +388,7 @@ function getProviderLabel(provider: string): string {
     flex-direction: column;
 }
 
-/* ── Header ──────────────────────────────────────────────────── */
+/* ── 顶部导航 ────────────────────────────────────────────────── */
 .header {
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(12px);
@@ -466,7 +461,7 @@ function getProviderLabel(provider: string): string {
     color: var(--accent);
 }
 
-/* ── Main ────────────────────────────────────────────────────── */
+/* ── 主体内容 ────────────────────────────────────────────────── */
 .main {
     flex: 1;
     max-width: 1100px;
@@ -495,7 +490,7 @@ function getProviderLabel(provider: string): string {
     font-family: 'DM Mono', monospace;
 }
 
-/* ── Empty state ─────────────────────────────────────────────── */
+/* ── 空状态 ──────────────────────────────────────────────────── */
 .empty-state {
     text-align: center;
     padding: 80px 24px;
@@ -539,7 +534,7 @@ function getProviderLabel(provider: string): string {
     box-shadow: 0 8px 24px rgb(98 84 214 / 25%);
 }
 
-/* ── KPI grid ────────────────────────────────────────────────── */
+/* ── KPI 指标网格 ─────────────────────────────────────────────── */
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -593,7 +588,7 @@ function getProviderLabel(provider: string): string {
     }
 }
 
-/* ── Card ────────────────────────────────────────────────────── */
+/* ── 卡片 ────────────────────────────────────────────────────── */
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -631,7 +626,7 @@ function getProviderLabel(provider: string): string {
     text-decoration: underline;
 }
 
-/* ── Activity sparkline ──────────────────────────────────────── */
+/* ── 活动迷你图 ──────────────────────────────────────────────── */
 .sparkline {
     display: flex;
     gap: 4px;
@@ -673,7 +668,7 @@ function getProviderLabel(provider: string): string {
     color: var(--text-dim);
 }
 
-/* ── Priority breakdown ──────────────────────────────────────── */
+/* ── 优先级分布 ──────────────────────────────────────────────── */
 .priority-breakdown {
     display: flex;
     flex-direction: column;
@@ -723,7 +718,7 @@ function getProviderLabel(provider: string): string {
     font-size: 10px;
 }
 
-/* ── Actions by owner ────────────────────────────────────────── */
+/* ── 按负责人统计行动项 ───────────────────────────────────────── */
 .owner-list {
     display: flex;
     flex-direction: column;
@@ -771,7 +766,7 @@ function getProviderLabel(provider: string): string {
     flex-shrink: 0;
 }
 
-/* ── Provider usage ──────────────────────────────────────────── */
+/* ── 提供商使用情况 ───────────────────────────────────────────── */
 .provider-usage {
     display: flex;
     flex-direction: column;
@@ -821,7 +816,7 @@ function getProviderLabel(provider: string): string {
     transition: width 0.6s ease;
 }
 
-/* ── Meeting types ───────────────────────────────────────────── */
+/* ── 会议类型 ────────────────────────────────────────────────── */
 .meeting-types {
     display: flex;
     flex-direction: column;
@@ -853,7 +848,7 @@ function getProviderLabel(provider: string): string {
     border-radius: 10px;
 }
 
-/* ── Topics cloud ────────────────────────────────────────────── */
+/* ── 云话题词 ────────────────────────────────────────────────── */
 .topics-cloud {
     display: flex;
     flex-wrap: wrap;
@@ -879,7 +874,7 @@ function getProviderLabel(provider: string): string {
     opacity: 0.6;
 }
 
-/* ── Recent meetings ─────────────────────────────────────────── */
+/* ── 最近会议 ────────────────────────────────────────────────── */
 .recent-list {
     display: flex;
     flex-direction: column;
@@ -936,7 +931,7 @@ function getProviderLabel(provider: string): string {
     margin-left: auto;
 }
 
-/* ── Footer ──────────────────────────────────────────────────── */
+/* ── 底部 ────────────────────────────────────────────────────── */
 .footer {
     border-top: 1px solid var(--border);
     text-align: center;

@@ -24,18 +24,9 @@ const showConfirm = ref(false);
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
 const errors = computed(() => ({
-    username:
-        touched.username && !USERNAME_RE.test(fields.username)
-            ? '3-20 位字母、数字或下划线'
-            : '',
-    password:
-        touched.password && fields.password.length < 8
-            ? '至少 8 位'
-            : '',
-    confirm:
-        tab.value === 'register' && touched.confirm && fields.confirm !== fields.password
-            ? '两次密码不一致'
-            : '',
+    username: touched.username && !USERNAME_RE.test(fields.username) ? '3-20 位字母、数字或下划线' : '',
+    password: touched.password && fields.password.length < 8 ? '至少 8 位' : '',
+    confirm: tab.value === 'register' && touched.confirm && fields.confirm !== fields.password ? '两次密码不一致' : '',
 }));
 
 const isValid = computed(() => {
@@ -63,8 +54,7 @@ async function handleSubmit() {
         }
     } catch (err: unknown) {
         formError.value =
-            (err as { data?: { message?: string } })?.data?.message ||
-            (tab.value === 'login' ? '用户名或密码错误' : '注册失败，请重试');
+            (err as { data?: { message?: string } })?.data?.message || (tab.value === 'login' ? '用户名或密码错误' : '注册失败，请重试');
     }
 }
 </script>
@@ -73,10 +63,13 @@ async function handleSubmit() {
     <div class="page">
         <!-- Minimal nav -->
         <header class="nav">
-            <NuxtLink to="/" class="brand">
-                <span class="brand-icon">◈</span>
-                <span class="brand-name">MinutAI</span>
-            </NuxtLink>
+            <div class="nav-inner">
+                <NuxtLink to="/" class="back-link">← 返回对话页</NuxtLink>
+                <NuxtLink to="/" class="brand">
+                    <span class="brand-icon">◈</span>
+                    <span class="brand-name">AI</span>
+                </NuxtLink>
+            </div>
         </header>
 
         <!-- Center card -->
@@ -84,14 +77,8 @@ async function handleSubmit() {
             <div class="card">
                 <!-- Tab switcher -->
                 <div class="tabs">
-                    <button
-                        :class="['tab', { active: tab === 'login' }]"
-                        @click="switchTab('login')"
-                    >登录</button>
-                    <button
-                        :class="['tab', { active: tab === 'register' }]"
-                        @click="switchTab('register')"
-                    >注册</button>
+                    <button :class="['tab', { active: tab === 'login' }]" @click="switchTab('login')">登录</button>
+                    <button :class="['tab', { active: tab === 'register' }]" @click="switchTab('register')">注册</button>
                 </div>
 
                 <!-- Form -->
@@ -126,12 +113,9 @@ async function handleSubmit() {
                                 autocomplete="current-password"
                                 @blur="touched.password = true"
                             />
-                            <button
-                                type="button"
-                                class="eye-btn"
-                                tabindex="-1"
-                                @click="showPassword = !showPassword"
-                            >{{ showPassword ? '隐藏' : '显示' }}</button>
+                            <button type="button" class="eye-btn" tabindex="-1" @click="showPassword = !showPassword">
+                                {{ showPassword ? '隐藏' : '显示' }}
+                            </button>
                         </div>
                         <p v-if="errors.password" class="field-error">{{ errors.password }}</p>
                     </div>
@@ -151,12 +135,9 @@ async function handleSubmit() {
                                     autocomplete="new-password"
                                     @blur="touched.confirm = true"
                                 />
-                                <button
-                                    type="button"
-                                    class="eye-btn"
-                                    tabindex="-1"
-                                    @click="showConfirm = !showConfirm"
-                                >{{ showConfirm ? '隐藏' : '显示' }}</button>
+                                <button type="button" class="eye-btn" tabindex="-1" @click="showConfirm = !showConfirm">
+                                    {{ showConfirm ? '隐藏' : '显示' }}
+                                </button>
                             </div>
                             <p v-if="errors.confirm" class="field-error">{{ errors.confirm }}</p>
                         </div>
@@ -166,13 +147,9 @@ async function handleSubmit() {
                     <p v-if="formError" class="form-error">⚠ {{ formError }}</p>
 
                     <!-- Submit -->
-                    <button
-                        type="submit"
-                        class="submit-btn"
-                        :disabled="isLoading"
-                    >
+                    <button type="submit" class="submit-btn" :disabled="isLoading">
                         <span v-if="isLoading" class="spinner" />
-                        <span>{{ isLoading ? '请稍候…' : (tab === 'login' ? '登录' : '注册') }}</span>
+                        <span>{{ isLoading ? '请稍候…' : tab === 'login' ? '登录' : '注册' }}</span>
                     </button>
                 </form>
 
@@ -211,6 +188,28 @@ async function handleSubmit() {
     flex-shrink: 0;
 }
 
+.nav-inner {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.back-link {
+    color: rgb(255 255 255 / 82%);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition:
+        color 0.15s,
+        opacity 0.15s;
+}
+
+.back-link:hover {
+    color: #fff;
+}
+
 .brand {
     display: flex;
     align-items: center;
@@ -225,6 +224,20 @@ async function handleSubmit() {
 .brand-icon {
     font-size: 18px;
     color: var(--accent-soft);
+}
+
+@media (width <= 520px) {
+    .nav {
+        height: auto;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    .nav-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
 }
 
 /* ── Main ── */
@@ -266,7 +279,9 @@ async function handleSubmit() {
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition:
+        background 0.15s,
+        color 0.15s;
     background: transparent;
     color: var(--text-muted);
 }
@@ -311,7 +326,9 @@ async function handleSubmit() {
     font-family: Syne, sans-serif;
     font-size: 14px;
     outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
 }
 
 .input-wrap .input {
@@ -406,7 +423,9 @@ async function handleSubmit() {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ── Switch hint ── */
