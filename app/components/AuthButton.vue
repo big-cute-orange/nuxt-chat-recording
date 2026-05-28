@@ -1,29 +1,29 @@
 <script setup lang="ts">
-const { user, logout } = useAuth();
+const { user, logout } = useAuth()
 
-const open = ref(false);
-const menuRef = ref<HTMLElement | null>(null);
+const open = ref(false)
+const menuRef = ref<HTMLElement | null>(null)
 
-const displayName = computed(() => user.value?.username || user.value?.name || user.value?.email || '?');
-const initial = computed(() => displayName.value[0]?.toUpperCase() ?? '?');
+const displayName = computed(() => user.value?.username || user.value?.name || user.value?.email || '?')
+const initial = computed(() => displayName.value[0]?.toUpperCase() ?? '?')
 
 function toggle() {
-    open.value = !open.value;
+    open.value = !open.value
 }
 
 function handleLogout() {
-    open.value = false;
-    logout();
+    open.value = false
+    logout()
 }
 
 function onClickOutside(e: MouseEvent) {
     if (menuRef.value && !menuRef.value.contains(e.target as Node)) {
-        open.value = false;
+        open.value = false
     }
 }
 
-onMounted(() => document.addEventListener('mousedown', onClickOutside));
-onUnmounted(() => document.removeEventListener('mousedown', onClickOutside));
+onMounted(() => document.addEventListener('mousedown', onClickOutside))
+onUnmounted(() => document.removeEventListener('mousedown', onClickOutside))
 </script>
 
 <template>

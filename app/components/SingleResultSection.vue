@@ -1,123 +1,123 @@
 <script setup lang="ts">
-import type { IMeetingSummary, TPriority } from '~/types/index';
-import type { TIntegrationId, ISendStatus } from '~/composables/useIntegrations';
+import type { IMeetingSummary, TPriority } from '~/types/index'
+import type { TIntegrationId, ISendStatus } from '~/composables/useIntegrations'
 
 const props = defineProps<{
-    result: IMeetingSummary;
-    submittedText: string;
-    providerLabel: string;
-    priorityConfig: Record<TPriority, { label: string; color: string; bg: string }>;
-    activeHistoryId: string | null;
-    hasIntegrations: boolean;
-    enabledIntegrations: TIntegrationId[];
-    integrationMeta: Record<TIntegrationId, { label: string; logo: string; logoClass: string }>;
-    intStatus: Record<TIntegrationId, ISendStatus>;
-    sendTo: (id: TIntegrationId, result: IMeetingSummary) => void;
-}>();
+    result: IMeetingSummary
+    submittedText: string
+    providerLabel: string
+    priorityConfig: Record<TPriority, { label: string; color: string; bg: string }>
+    activeHistoryId: string | null
+    hasIntegrations: boolean
+    enabledIntegrations: TIntegrationId[]
+    integrationMeta: Record<TIntegrationId, { label: string; logo: string; logoClass: string }>
+    intStatus: Record<TIntegrationId, ISendStatus>
+    sendTo: (id: TIntegrationId, result: IMeetingSummary) => void
+}>()
 
 const emit = defineEmits<{
-    reset: [];
-    'save-edit': [IMeetingSummary];
-}>();
+    reset: []
+    'save-edit': [IMeetingSummary]
+}>()
 
 // ── Edit mode ─────────────────────────────────────────────────────────────────
-const editing = ref(false);
-const draft = ref<IMeetingSummary | null>(null);
+const editing = ref(false)
+const draft = ref<IMeetingSummary | null>(null)
 
 function startEditing() {
-    draft.value = JSON.parse(JSON.stringify(props.result));
-    editing.value = true;
+    draft.value = JSON.parse(JSON.stringify(props.result))
+    editing.value = true
 }
 
 function cancelEditing() {
-    draft.value = null;
-    editing.value = false;
+    draft.value = null
+    editing.value = false
 }
 
 function saveEdits() {
     if (!draft.value) {
-        return;
+        return
     }
 
-    emit('save-edit', { ...draft.value });
-    editing.value = false;
-    draft.value = null;
+    emit('save-edit', { ...draft.value })
+    editing.value = false
+    draft.value = null
 }
 
 function addActionItem() {
     if (!draft.value) {
-        return;
+        return
     }
 
-    draft.value.actionItems.push({ task: '', owner: '', deadline: '', priority: 'medium' });
+    draft.value.actionItems.push({ task: '', owner: '', deadline: '', priority: 'medium' })
 }
 
 function removeActionItem(i: number) {
     if (!draft.value) {
-        return;
+        return
     }
 
-    draft.value.actionItems.splice(i, 1);
+    draft.value.actionItems.splice(i, 1)
 }
 
 function addDecision() {
     if (!draft.value) {
-        return;
+        return
     }
 
-    draft.value.decisions.push({ decision: '', rationale: '', madeBy: '' });
+    draft.value.decisions.push({ decision: '', rationale: '', madeBy: '' })
 }
 
 function removeDecision(i: number) {
     if (!draft.value) {
-        return;
+        return
     }
 
-    draft.value.decisions.splice(i, 1);
+    draft.value.decisions.splice(i, 1)
 }
 
 function addParticipant() {
     if (!draft.value) {
-        return;
+        return
     }
 
-    draft.value.participants.push('');
+    draft.value.participants.push('')
 }
 
 function removeParticipant(i: number) {
     if (!draft.value) {
-        return;
+        return
     }
 
-    draft.value.participants.splice(i, 1);
+    draft.value.participants.splice(i, 1)
 }
 
 function addTopic() {
     if (!draft.value) {
-        return;
+        return
     }
 
-    draft.value.keyTopics.push('');
+    draft.value.keyTopics.push('')
 }
 
 function removeTopic(i: number) {
     if (!draft.value) {
-        return;
+        return
     }
 
-    draft.value.keyTopics.splice(i, 1);
+    draft.value.keyTopics.splice(i, 1)
 }
 
 // ── Export ────────────────────────────────────────────────────────────────────
-const copiedKey = ref<string | null>(null);
-const transcriptExpanded = ref(false);
+const copiedKey = ref<string | null>(null)
+const transcriptExpanded = ref(false)
 
 function flashCopied(key: string) {
-    copiedKey.value = key;
+    copiedKey.value = key
 
     setTimeout(() => {
-        copiedKey.value = null;
-    }, 2000);
+        copiedKey.value = null
+    }, 2000)
 }
 
 function buildMarkdown(s: IMeetingSummary, prov?: string): string {
@@ -125,100 +125,100 @@ function buildMarkdown(s: IMeetingSummary, prov?: string): string {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
-    });
-    const via = prov ?? props.providerLabel;
-    const lines: string[] = [];
+    })
+    const via = prov ?? props.providerLabel
+    const lines: string[] = []
 
-    lines.push(`# 会议纪要 — ${s.meetingType}`);
-    lines.push(`*${date} · 分析模型：${via}*`);
-    lines.push('');
-    lines.push('## 参与人');
-    lines.push(s.participants.map((p: string) => `- ${p}`).join('\n'));
-    lines.push('');
-    lines.push('## 关键议题');
-    lines.push(s.keyTopics.map((t: string) => `- ${t}`).join('\n'));
-    lines.push('');
-    lines.push('## 会议摘要');
-    lines.push(s.summary);
-    lines.push('');
-    lines.push('## 行动项');
+    lines.push(`# 会议纪要 — ${s.meetingType}`)
+    lines.push(`*${date} · 分析模型：${via}*`)
+    lines.push('')
+    lines.push('## 参与人')
+    lines.push(s.participants.map((p: string) => `- ${p}`).join('\n'))
+    lines.push('')
+    lines.push('## 关键议题')
+    lines.push(s.keyTopics.map((t: string) => `- ${t}`).join('\n'))
+    lines.push('')
+    lines.push('## 会议摘要')
+    lines.push(s.summary)
+    lines.push('')
+    lines.push('## 行动项')
 
     s.actionItems.forEach((item: { priority: string; task: string; owner: string; deadline: string }) => {
-        lines.push(`- **[${item.priority.toUpperCase()}]** ${item.task}`);
-        lines.push(`  - 负责人：${item.owner}`);
-        lines.push(`  - 截止日期：${item.deadline}`);
-    });
+        lines.push(`- **[${item.priority.toUpperCase()}]** ${item.task}`)
+        lines.push(`  - 负责人：${item.owner}`)
+        lines.push(`  - 截止日期：${item.deadline}`)
+    })
 
-    lines.push('');
-    lines.push('## 决策事项');
+    lines.push('')
+    lines.push('## 决策事项')
 
     s.decisions.forEach((d: { decision: string; rationale: string; madeBy: string }, i: number) => {
-        lines.push(`${i + 1}. **${d.decision}**`);
-        if (d.rationale) lines.push(`   *${d.rationale}*`);
-        lines.push(`   — ${d.madeBy}`);
-    });
+        lines.push(`${i + 1}. **${d.decision}**`)
+        if (d.rationale) lines.push(`   *${d.rationale}*`)
+        lines.push(`   — ${d.madeBy}`)
+    })
 
-    return lines.join('\n');
+    return lines.join('\n')
 }
 
 function buildEmail(s: IMeetingSummary): string {
-    const lines: string[] = [];
+    const lines: string[] = []
 
-    lines.push('大家好，', '');
-    lines.push(`以下是本次 ${s.meetingType} 的会议摘要及后续行动项，供大家参考。`, '');
-    lines.push('执行摘要', '--------', s.summary, '');
+    lines.push('大家好，', '')
+    lines.push(`以下是本次 ${s.meetingType} 的会议摘要及后续行动项，供大家参考。`, '')
+    lines.push('执行摘要', '--------', s.summary, '')
 
     if (s.actionItems.length) {
-        lines.push('行动项', '------');
+        lines.push('行动项', '------')
 
         s.actionItems.forEach((item: { task: string; owner: string; deadline: string; priority: string }) => {
-            lines.push(`• ${item.task}`);
-            lines.push(`  负责人：${item.owner} | 截止日期：${item.deadline}`);
-        });
+            lines.push(`• ${item.task}`)
+            lines.push(`  负责人：${item.owner} | 截止日期：${item.deadline}`)
+        })
 
-        lines.push('');
+        lines.push('')
     }
 
     if (s.decisions.length) {
-        lines.push('决策事项', '--------');
+        lines.push('决策事项', '--------')
 
-        s.decisions.forEach((d: { decision: string; rationale: string; madeBy: string }) => lines.push(`• ${d.decision}`));
+        s.decisions.forEach((d: { decision: string; rationale: string; madeBy: string }) => lines.push(`• ${d.decision}`))
 
-        lines.push('');
+        lines.push('')
     }
 
-    lines.push('如有遗漏或需要更正，请随时告知。', '', '谢谢');
+    lines.push('如有遗漏或需要更正，请随时告知。', '', '谢谢')
 
-    return lines.join('\n');
+    return lines.join('\n')
 }
 
 async function copyToClipboard(text: string, key: string) {
     try {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(text)
     } catch {
-        const el = document.createElement('textarea');
+        const el = document.createElement('textarea')
 
-        el.value = text;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
+        el.value = text
+        document.body.appendChild(el)
+        el.select()
+        document.execCommand('copy')
+        document.body.removeChild(el)
     }
 
-    flashCopied(key);
+    flashCopied(key)
 }
 
 function downloadMarkdown(s: IMeetingSummary, prov?: string) {
-    const content = buildMarkdown(s, prov);
-    const blob = new Blob([content], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const content = buildMarkdown(s, prov)
+    const blob = new Blob([content], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
 
-    a.href = url;
-    a.download = `${s.meetingType.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-    flashCopied('download');
+    a.href = url
+    a.download = `${s.meetingType.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+    flashCopied('download')
 }
 </script>
 

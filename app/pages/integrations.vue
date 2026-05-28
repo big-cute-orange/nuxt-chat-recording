@@ -1,49 +1,49 @@
 <script setup lang="ts">
-import type { IIntegrationsConfig } from '~/types/index';
+import type { IIntegrationsConfig } from '~/types/index'
 
-const STORAGE_KEY = 'minutai:integrations';
+const STORAGE_KEY = 'minutai:integrations'
 
 const defaults: IIntegrationsConfig = {
     jira: { enabled: false, baseUrl: '', email: '', apiToken: '', projectKey: '' },
     linear: { enabled: false, apiKey: '', teamId: '' },
     notion: { enabled: false, integrationToken: '', databaseId: '' },
     azure: { enabled: false, organization: '', project: '', pat: '', workItemType: 'Task' },
-};
+}
 
-const config = ref<IIntegrationsConfig>(JSON.parse(JSON.stringify(defaults)));
-const saved = ref(false);
+const config = ref<IIntegrationsConfig>(JSON.parse(JSON.stringify(defaults)))
+const saved = ref(false)
 
 onMounted(() => {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(STORAGE_KEY)
 
-        if (raw) config.value = { ...defaults, ...JSON.parse(raw) };
+        if (raw) config.value = { ...defaults, ...JSON.parse(raw) }
     } catch {
         /* ignore */
     }
-});
+})
 
 function save() {
     // eslint-disable-next-line
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config.value));
-    saved.value = true;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(config.value))
+    saved.value = true
     setTimeout(() => {
-        saved.value = false;
-    }, 2500);
+        saved.value = false
+    }, 2500)
 }
 
 function reset() {
-    config.value = JSON.parse(JSON.stringify(defaults));
-    localStorage.removeItem(STORAGE_KEY);
+    config.value = JSON.parse(JSON.stringify(defaults))
+    localStorage.removeItem(STORAGE_KEY)
 }
 
 // Show/hide secret fields
-const visible = ref({ jira: false, linear: false, notion: false, azure: false });
+const visible = ref({ jira: false, linear: false, notion: false, azure: false })
 
 // Count enabled integrations
 const enabledCount = computed(
     () => [config.value.jira, config.value.linear, config.value.notion, config.value.azure].filter((c) => c.enabled).length
-);
+)
 </script>
 
 <template>

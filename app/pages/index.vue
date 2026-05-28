@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { TProvider, IMeetingSummary, TInputType, IHistoryEntry } from '~/types/index';
+import type { TProvider, IMeetingSummary, TInputType, IHistoryEntry } from '~/types/index'
 
-const { summarize, result, loading, error, progress, reset } = useSummarizer();
-const { compare, results: compareResults, loading: compareLoading, error: compareError, reset: compareReset } = useCompare();
+const { summarize, result, loading, error, progress, reset } = useSummarizer()
+const { compare, results: compareResults, loading: compareLoading, error: compareError, reset: compareReset } = useCompare()
 const {
     transcribe,
     result: transcribeResult,
@@ -10,15 +10,8 @@ const {
     error: transcribeError,
     uploadProgress,
     reset: transcribeReset,
-} = useTranscribe();
-const {
-    enabledIntegrations,
-    hasIntegrations,
-    status: intStatus,
-    sendTo,
-    integrationMeta,
-    loadConfig: loadIntegrations,
-} = useIntegrations();
+} = useTranscribe()
+const { enabledIntegrations, hasIntegrations, status: intStatus, sendTo, integrationMeta, loadConfig: loadIntegrations } = useIntegrations()
 const {
     history,
     total: historyTotal,
@@ -31,288 +24,288 @@ const {
     remove: historyRemove,
     clear: historyClear,
     migrateFromLocalStorage,
-} = useHistory();
+} = useHistory()
 
 // ── Mode ──────────────────────────────────────────────────────────────────────
-const mode = ref<'single' | 'compare'>('single');
+const mode = ref<'single' | 'compare'>('single')
 
 function switchMode(m: 'single' | 'compare') {
-    mode.value = m;
-    handleReset();
+    mode.value = m
+    handleReset()
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
-const transcriptText = ref('');
-const submittedText = ref('');
-const provider = ref<TProvider>('deepseek');
-const compareProviders = ref<[TProvider, TProvider]>(['deepseek', 'qwen']);
-const inputMode = ref<'paste' | 'upload' | 'audio' | 'free-notes'>('paste');
-const inputType = ref<TInputType>('transcript');
+const transcriptText = ref('')
+const submittedText = ref('')
+const provider = ref<TProvider>('deepseek')
+const compareProviders = ref<[TProvider, TProvider]>(['deepseek', 'qwen'])
+const inputMode = ref<'paste' | 'upload' | 'audio' | 'free-notes'>('paste')
+const inputType = ref<TInputType>('transcript')
 
 // Keep inputType in sync with inputMode
 watch(inputMode, (mode: string) => {
-    inputType.value = mode === 'free-notes' ? 'free-notes' : 'transcript';
-});
+    inputType.value = mode === 'free-notes' ? 'free-notes' : 'transcript'
+})
 
-const audioFile = ref<File | null>(null);
-const transcribing = ref(false);
-const transcribeStep = ref<'idle' | 'uploading' | 'done'>('idle');
-const fileName = ref('');
-const dragOver = ref(false);
+const audioFile = ref<File | null>(null)
+const transcribing = ref(false)
+const transcribeStep = ref<'idle' | 'uploading' | 'done'>('idle')
+const fileName = ref('')
+const dragOver = ref(false)
 // Convenience computed for "is anything loading"
-const isLoading = computed(() => loading.value || compareLoading.value || transcribeLoading.value);
-const activeError = computed(() => error.value || compareError.value || transcribeError.value);
-const hasResult = computed(() => !!result.value || !!compareResults.value);
+const isLoading = computed(() => loading.value || compareLoading.value || transcribeLoading.value)
+const activeError = computed(() => error.value || compareError.value || transcribeError.value)
+const hasResult = computed(() => !!result.value || !!compareResults.value)
 
 // ── History ───────────────────────────────────────────────────────────────────
-const activeHistoryId = ref<string | null>(null);
+const activeHistoryId = ref<string | null>(null)
 
 async function onDeleteHistoryEntry(id: string) {
-    await historyRemove(id);
+    await historyRemove(id)
 
     if (activeHistoryId.value === id) {
-        activeHistoryId.value = null;
-        reset();
-        submittedText.value = '';
+        activeHistoryId.value = null
+        reset()
+        submittedText.value = ''
     }
 }
 
 function openHistoryEntry(entry: IHistoryEntry) {
-    activeHistoryId.value = entry.id;
-    submittedText.value = entry.transcript;
-    provider.value = entry.provider;
-    mode.value = 'single';
-    reset();
+    activeHistoryId.value = entry.id
+    submittedText.value = entry.transcript
+    provider.value = entry.provider
+    mode.value = 'single'
+    reset()
     nextTick(() => {
-        result.value = entry.summary;
-    });
+        result.value = entry.summary
+    })
 }
 
 onMounted(async () => {
-    loadIntegrations();
-    await migrateFromLocalStorage();
-    await historyLoad();
-});
+    loadIntegrations()
+    await migrateFromLocalStorage()
+    await historyLoad()
+})
 
 // ── File parsers ──────────────────────────────────────────────────────────────
 function parseVtt(raw: string): string {
-    const lines = raw.split('\n');
-    const out: string[] = [];
-    let currentSpeaker = '';
-    let currentText = '';
+    const lines = raw.split('\n')
+    const out: string[] = []
+    let currentSpeaker = ''
+    let currentText = ''
 
     for (const line of lines) {
-        const t = line.trim();
+        const t = line.trim()
 
         if (!t || t === 'WEBVTT' || t.startsWith('NOTE') || t.startsWith('STYLE')) {
-            continue;
+            continue
         }
 
         if (/^\d{2}:[\d:.]+\s*-->\s*[\d:.]+/.test(t)) {
-            continue;
+            continue
         }
 
         if (/^\d+$/.test(t)) {
-            continue;
+            continue
         }
 
-        const m = t.match(/^<v ([^>]+)>(.*)$/);
+        const m = t.match(/^<v ([^>]+)>(.*)$/)
 
         if (m && m[1] && m[2]) {
-            const speaker = m[1].trim();
-            const text = m[2].replace(/<[^>]+>/g, '').trim();
+            const speaker = m[1].trim()
+            const text = m[2].replace(/<[^>]+>/g, '').trim()
 
             if (speaker !== currentSpeaker) {
                 if (currentText) {
-                    out.push(`${currentSpeaker}: ${currentText}`);
+                    out.push(`${currentSpeaker}: ${currentText}`)
                 }
 
-                currentSpeaker = speaker;
-                currentText = text;
+                currentSpeaker = speaker
+                currentText = text
             } else {
-                currentText += ' ' + text;
+                currentText += ' ' + text
             }
         } else {
-            const text = t.replace(/<[^>]+>/g, '').trim();
+            const text = t.replace(/<[^>]+>/g, '').trim()
 
             if (text) {
-                currentText += ' ' + text;
+                currentText += ' ' + text
             }
         }
     }
 
     if (currentText) {
-        out.push(currentSpeaker ? `${currentSpeaker}: ${currentText}` : currentText);
+        out.push(currentSpeaker ? `${currentSpeaker}: ${currentText}` : currentText)
     }
 
-    return out.join('\n');
+    return out.join('\n')
 }
 
 function parseSrt(raw: string): string {
-    const lines = raw.split('\n');
-    const out: string[] = [];
+    const lines = raw.split('\n')
+    const out: string[] = []
 
     for (const line of lines) {
-        const t = line.trim();
+        const t = line.trim()
 
         if (!t || /^\d+$/.test(t) || /^\d{2}:\d{2}:\d{2}[,.]?\d*\s*-->\s*\d{2}:\d{2}:\d{2}/.test(t)) {
-            continue;
+            continue
         }
 
-        out.push(t);
+        out.push(t)
     }
 
-    const merged: string[] = [];
+    const merged: string[] = []
 
     for (const line of out) {
         if (merged[merged.length - 1] !== line) {
-            merged.push(line);
+            merged.push(line)
         }
     }
 
-    return merged.join('\n');
+    return merged.join('\n')
 }
 
 async function handleFile(file: File) {
     if (!file) {
-        return;
+        return
     }
 
-    fileName.value = file.name;
-    const name = file.name.toLowerCase();
+    fileName.value = file.name
+    const name = file.name.toLowerCase()
 
     if (name.endsWith('.txt')) {
-        transcriptText.value = await file.text();
+        transcriptText.value = await file.text()
     } else if (name.endsWith('.vtt')) {
-        transcriptText.value = parseVtt(await file.text());
+        transcriptText.value = parseVtt(await file.text())
     } else if (name.endsWith('.srt')) {
-        transcriptText.value = parseSrt(await file.text());
+        transcriptText.value = parseSrt(await file.text())
     } else if (name.endsWith('.docx')) {
-        const mammoth = await import('mammoth');
-        const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+        const mammoth = await import('mammoth')
+        const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })
 
-        transcriptText.value = value;
+        transcriptText.value = value
     } else {
-        fileName.value = '';
-        alert('不支持的文件格式，请上传 .txt / .docx / .vtt / .srt');
-        return;
+        fileName.value = ''
+        alert('不支持的文件格式，请上传 .txt / .docx / .vtt / .srt')
+        return
     }
 
-    inputMode.value = 'paste';
+    inputMode.value = 'paste'
 }
 
 function handleDrop(e: DragEvent) {
-    dragOver.value = false;
-    const file = e.dataTransfer?.files[0];
+    dragOver.value = false
+    const file = e.dataTransfer?.files[0]
 
     if (file) {
-        handleFile(file);
+        handleFile(file)
     }
 }
 
 function handleFileInput(e: Event) {
-    const file = (e.target as HTMLInputElement).files?.[0];
+    const file = (e.target as HTMLInputElement).files?.[0]
 
     if (file) {
-        handleFile(file);
+        handleFile(file)
     }
 }
 
 // Handle audio/video file selection for Whisper
 function handleAudioFile(e: Event) {
-    const file = (e.target as HTMLInputElement).files?.[0];
+    const file = (e.target as HTMLInputElement).files?.[0]
 
     if (!file) {
-        return;
+        return
     }
 
-    audioFile.value = file;
-    transcribeStep.value = 'idle';
-    transcribeReset();
-    transcriptText.value = '';
+    audioFile.value = file
+    transcribeStep.value = 'idle'
+    transcribeReset()
+    transcriptText.value = ''
 }
 
 function handleAudioDrop(e: DragEvent) {
-    const file = e.dataTransfer?.files[0];
+    const file = e.dataTransfer?.files[0]
 
     if (!file) {
-        return;
+        return
     }
 
-    audioFile.value = file;
-    transcribeStep.value = 'idle';
-    transcribeReset();
-    transcriptText.value = '';
+    audioFile.value = file
+    transcribeStep.value = 'idle'
+    transcribeReset()
+    transcriptText.value = ''
 }
 
 async function handleTranscribe() {
     if (!audioFile.value) {
-        return;
+        return
     }
 
-    transcribing.value = true;
-    transcribeStep.value = 'uploading';
-    const text = await transcribe(audioFile.value);
+    transcribing.value = true
+    transcribeStep.value = 'uploading'
+    const text = await transcribe(audioFile.value)
 
     if (text) {
-        transcriptText.value = text;
-        transcribeStep.value = 'done';
-        inputMode.value = 'paste';
+        transcriptText.value = text
+        transcribeStep.value = 'done'
+        inputMode.value = 'paste'
     } else {
-        transcribeStep.value = 'idle';
+        transcribeStep.value = 'idle'
     }
 
-    transcribing.value = false;
+    transcribing.value = false
 }
 
 // ── Submit & reset ────────────────────────────────────────────────────────────
 async function handleSubmit() {
     if (!transcriptText.value.trim()) {
-        return;
+        return
     }
 
-    submittedText.value = transcriptText.value;
-    activeHistoryId.value = null;
+    submittedText.value = transcriptText.value
+    activeHistoryId.value = null
 
     if (mode.value === 'single') {
-        await summarize(transcriptText.value, provider.value, inputType.value);
+        await summarize(transcriptText.value, provider.value, inputType.value)
 
         if (result.value) {
-            activeHistoryId.value = await historyAdd(result.value, submittedText.value, provider.value);
+            activeHistoryId.value = await historyAdd(result.value, submittedText.value, provider.value)
         }
     } else {
-        await compare(transcriptText.value, compareProviders.value);
+        await compare(transcriptText.value, compareProviders.value)
     }
 }
 
 function handleReset() {
-    reset();
-    compareReset();
-    transcribeReset();
-    transcriptText.value = '';
-    submittedText.value = '';
-    fileName.value = '';
-    audioFile.value = null;
-    transcribeStep.value = 'idle';
-    activeHistoryId.value = null;
+    reset()
+    compareReset()
+    transcribeReset()
+    transcriptText.value = ''
+    submittedText.value = ''
+    fileName.value = ''
+    audioFile.value = null
+    transcribeStep.value = 'idle'
+    activeHistoryId.value = null
 }
 
 // ── Single result save handler ────────────────────────────────────────────────
 function onSingleResultSaveEdit(updated: IMeetingSummary) {
-    result.value = { ...updated };
+    result.value = { ...updated }
 
     if (activeHistoryId.value) {
-        const idx = history.value.findIndex((e: IHistoryEntry) => e.id === activeHistoryId.value);
-        const entry = history.value[idx];
+        const idx = history.value.findIndex((e: IHistoryEntry) => e.id === activeHistoryId.value)
+        const entry = history.value[idx]
 
         if (idx !== -1 && entry) {
-            entry.summary = { ...updated };
-            entry.meetingType = updated.meetingType;
+            entry.summary = { ...updated }
+            entry.meetingType = updated.meetingType
         }
 
         historyUpdate(activeHistoryId.value, updated).catch((err: unknown) => {
-            console.warn('[saveEdits] Failed to persist edit:', err);
-        });
+            console.warn('[saveEdits] Failed to persist edit:', err)
+        })
     }
 }
 
@@ -321,31 +314,31 @@ const priorityConfig = {
     high: { label: 'High', color: '#dc2626', bg: 'rgba(220,38,38,0.1)' },
     medium: { label: 'Medium', color: '#d97706', bg: 'rgba(217,119,6,0.1)' },
     low: { label: 'Low', color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
-};
+}
 
 const providers = [
     { id: 'deepseek', label: 'DeepSeek' },
     { id: 'qwen', label: '通义千问' },
     { id: 'doubao', label: '豆包' },
-];
+]
 
-const providerLabel = computed(() => providers.find((p) => p.id === provider.value)?.label ?? provider.value);
+const providerLabel = computed(() => providers.find((p) => p.id === provider.value)?.label ?? provider.value)
 
 function providerName(id: TProvider) {
-    return providers.find((p) => p.id === id)?.label ?? id;
+    return providers.find((p) => p.id === id)?.label ?? id
 }
 
 function toggleCompareProvider(id: TProvider) {
-    const [a, b] = compareProviders.value;
+    const [a, b] = compareProviders.value
 
     if (a === id) {
-        const third = providers.find((p) => p.id !== a && p.id !== b)!;
-        compareProviders.value = [third.id as TProvider, b];
+        const third = providers.find((p) => p.id !== a && p.id !== b)!
+        compareProviders.value = [third.id as TProvider, b]
     } else if (b === id) {
-        const third = providers.find((p) => p.id !== a && p.id !== b)!;
-        compareProviders.value = [a, third.id as TProvider];
+        const third = providers.find((p) => p.id !== a && p.id !== b)!
+        compareProviders.value = [a, third.id as TProvider]
     } else {
-        compareProviders.value = [a, id];
+        compareProviders.value = [a, id]
     }
 }
 </script>

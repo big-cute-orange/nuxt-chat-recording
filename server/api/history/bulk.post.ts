@@ -2,33 +2,33 @@
 // One-time migration endpoint: accepts an array of localStorage history entries
 // and inserts them into the database, skipping any that already exist (by id).
 
-import { defineEventHandler, readBody, createError, type H3Event } from 'h3';
-import { useDb } from '#server/utils/db';
-import { meetings } from '#server/db/schema';
-import type { IHistoryEntry } from '~/types';
+import { defineEventHandler, readBody, createError, type H3Event } from 'h3'
+import { useDb } from '#server/utils/db'
+import { meetings } from '#server/db/schema'
+import type { IHistoryEntry } from '~/types'
 
 export default defineEventHandler(async (event: H3Event) => {
-    const db = useDb();
-    const body = await readBody(event);
-    const entries: IHistoryEntry[] = body?.entries;
+    const db = useDb()
+    const body = await readBody(event)
+    const entries: IHistoryEntry[] = body?.entries
 
     if (!Array.isArray(entries) || entries.length === 0) {
-        throw createError({ statusCode: 400, message: 'entries must be a non-empty array.' });
+        throw createError({ statusCode: 400, message: 'entries must be a non-empty array.' })
     }
 
-    const session = await getUserSession(event);
-    const userId = session?.user?.id;
+    const session = await getUserSession(event)
+    const userId = session?.user?.id
 
     if (!userId) {
-        throw createError({ statusCode: 401, message: 'Login required.' });
+        throw createError({ statusCode: 401, message: 'Login required.' })
     }
 
-    const now = new Date().toISOString();
-    let inserted = 0;
+    const now = new Date().toISOString()
+    let inserted = 0
 
     for (const entry of entries) {
         if (!entry.id || !entry.summary || !entry.provider) {
-            continue;
+            continue
         }
 
         // Skip existing entries to make the operation idempotent
@@ -46,10 +46,10 @@ export default defineEventHandler(async (event: H3Event) => {
                 summary: JSON.stringify(entry.summary),
                 createdAt: entry.date ?? now,
             })
-            .onConflictDoNothing();
+            .onConflictDoNothing()
 
-        inserted++;
+        inserted++
     }
 
-    return { inserted };
-});
+    return { inserted }
+})

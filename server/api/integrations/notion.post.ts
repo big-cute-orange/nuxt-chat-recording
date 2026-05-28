@@ -1,94 +1,101 @@
 // POST /api/integrations/notion
 // Creates pages in a Notion database from meeting action items
 
-import { defineEventHandler, readBody, createError, type H3Event } from 'h3';
-import type { IActionItem } from '~/types';
+import { defineEventHandler, readBody, createError, type H3Event } from 'h3'
+import type { IActionItem } from '~/types'
 
 interface INotionPagePayload {
-    parent: { database_id: string };
-    properties: Record<string, unknown>;
+    parent: { database_id: string }
+    properties: Record<string, unknown>
     children: Array<{
-        object: 'block';
-        type: 'paragraph';
+        object: 'block'
+        type: 'paragraph'
         paragraph: {
             rich_text: Array<{
-                type: 'text';
+                type: 'text'
                 text: {
-                    content: string;
-                };
-            }>;
-        };
-    }>;
+                    content: string
+                }
+            }>
+        }
+    }>
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
     high: 'red',
     medium: 'yellow',
     low: 'green',
-};
+}
 
 export default defineEventHandler(async (event: H3Event) => {
-    const body = await readBody(event);
-    const { integrationToken, databaseId, actionItems, meetingType } = body;
+    const body = await readBody(event)
+    const { integrationToken, databaseId, actionItems, meetingType } = body
 
     if (!integrationToken || !databaseId) {
-        throw createError({ statusCode: 400, message: 'Missing Notion configuration (integrationToken, databaseId).' });
+        throw createError({ statusCode: 400, message: 'Missing Notion configuration (integrationToken, databaseId).' })
     }
 
     if (!actionItems?.length) {
-        throw createError({ statusCode: 400, message: 'No action items to send.' });
+        throw createError({ statusCode: 400, message: 'No action items to send.' })
     }
 
     const headers = {
         Authorization: `Bearer ${integrationToken}`,
         'Content-Type': 'application/json',
         'Notion-Version': '2022-06-28',
-    };
+    }
 
     // First, introspect the database to find available properties
-    const dbRes = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, { headers });
+    const dbRes = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, { headers })
 
     if (!dbRes.ok) {
-        const err = await dbRes.json();
+        const err = await dbRes.json()
 
         throw createError({
             statusCode: 400,
             message: err.message ?? 'Could not access Notion database. Check your token and database ID.',
-        });
+        })
     }
 
-    const db = await dbRes.json();
-    const props = db.properties as Record<string, { id: string; type: string }>;
+    const db = await dbRes.json()
+    const props = db.properties as Record<string, { id: string; type: string }>
 
     // Detect common property names across different database schemas
-    const findProp = (...names: string[]) => names.find((n) => props[n]) ?? null;
+    const findProp = (...names: string[]) => names.find((n) => props[n]) ?? null
 
     const titleProp =
-        findProp('Name', 'Task', 'Title', 'Issue', 'Todo') ?? (Object.keys(props).find((k) => props[k]?.type === 'title') ?? 'Name');
-    const statusProp = findProp('Status', 'State');
-    const assigneeProp = findProp('Assignee', 'Owner', 'Assigned to', 'Person');
-    const priorityProp = findProp('Priority');
-    const tagsProp = findProp('Tags', 'Label', 'Labels');
+        findProp('Name', 'Task', 'Title', 'Issue', 'Todo') ?? Object.keys(props).find((k) => props[k]?.type === 'title') ?? 'Name'
+    const statusProp = findProp('Status', 'State')
+    const assigneeProp = findProp('Assignee', 'Owner', 'Assigned to', 'Person')
+    const priorityProp = findProp('Priority')
+    const tagsProp = findProp('Tags', 'Label', 'Labels')
 
-    const results: { task: string; url: string | null; error: string | null }[] = [];
+    const results: { task: string; url: string | null; error: string | null }[] = []
 
     for (const item of actionItems as IActionItem[]) {
         try {
             // Build properties dynamically based on what the database has
-            const properties: Record<string, { title?: Array<{ text: { content: string } }>; select?: { name: string; color?: string }; multi_select?: Array<{ name: string }> }> = {
+            const properties: Record<
+                string,
+                {
+                    title?: Array<{ text: { content: string } }>
+                    select?: { name: string; color?: string }
+                    multi_select?: Array<{ name: string }>
+                }
+            > = {
                 [titleProp]: { title: [{ text: { content: item.task } }] },
-            };
+            }
 
             if (priorityProp && props[priorityProp]?.type === 'select') {
                 properties[priorityProp] = {
                     select: { name: item.priority.charAt(0).toUpperCase() + item.priority.slice(1), color: PRIORITY_COLORS[item.priority] },
-                };
+                }
             }
 
             if (tagsProp && props[tagsProp]?.type === 'multi_select') {
                 properties[tagsProp] = {
                     multi_select: [{ name: `MinutAI — ${meetingType ?? 'Meeting'}` }],
-                };
+                }
             }
 
             const payload: INotionPagePayload = {
@@ -110,25 +117,25 @@ export default defineEventHandler(async (event: H3Event) => {
                         },
                     },
                 ],
-            };
+            }
 
             const res = await fetch('https://api.notion.com/v1/pages', {
                 method: 'POST',
                 headers,
                 body: JSON.stringify(payload),
-            });
+            })
 
-            const data = await res.json();
+            const data = await res.json()
 
             if (!res.ok) {
-                results.push({ task: item.task, url: null, error: data.message ?? `HTTP ${res.status}` });
+                results.push({ task: item.task, url: null, error: data.message ?? `HTTP ${res.status}` })
             } else {
-                results.push({ task: item.task, url: data.url, error: null });
+                results.push({ task: item.task, url: data.url, error: null })
             }
         } catch (err: unknown) {
-            results.push({ task: item.task, url: null, error: (err as Error).message });
+            results.push({ task: item.task, url: null, error: (err as Error).message })
         }
     }
 
-    return { results };
-});
+    return { results }
+})

@@ -10,5 +10,5 @@ export function formatDate(iso: string, withTime = false): string {
         month: 'short',
         year: 'numeric',
         ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}),
-    });
+    })
 }

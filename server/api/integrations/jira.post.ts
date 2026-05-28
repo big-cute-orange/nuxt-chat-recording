@@ -1,37 +1,37 @@
 // POST /api/integrations/jira
 // Creates issues in a Jira project from meeting action items
 
-import { defineEventHandler, readBody, createError, type H3Event } from 'h3';
-import type { IActionItem } from '~/types';
+import { defineEventHandler, readBody, createError, type H3Event } from 'h3'
+import type { IActionItem } from '~/types'
 
 // Map MinutAI priorities to Jira priority names
 const PRIORITY_MAP: Record<string, string> = {
     high: 'High',
     medium: 'Medium',
-    low: 'Low'
-};
+    low: 'Low',
+}
 
 export default defineEventHandler(async (event: H3Event) => {
-    const body = await readBody(event);
-    const { baseUrl, email, apiToken, projectKey, actionItems, meetingType } = body;
+    const body = await readBody(event)
+    const { baseUrl, email, apiToken, projectKey, actionItems, meetingType } = body
 
     if (!baseUrl || !email || !apiToken || !projectKey) {
-        throw createError({ statusCode: 400, message: 'Missing Jira configuration (baseUrl, email, apiToken, projectKey).' });
+        throw createError({ statusCode: 400, message: 'Missing Jira configuration (baseUrl, email, apiToken, projectKey).' })
     }
 
     if (!actionItems?.length) {
-        throw createError({ statusCode: 400, message: 'No action items to send.' });
+        throw createError({ statusCode: 400, message: 'No action items to send.' })
     }
 
-    const auth = Buffer.from(`${email}:${apiToken}`).toString('base64');
+    const auth = Buffer.from(`${email}:${apiToken}`).toString('base64')
     const headers = {
         Authorization: `Basic ${auth}`,
         'Content-Type': 'application/json',
-        Accept: 'application/json'
-    };
+        Accept: 'application/json',
+    }
 
-    const cleanBase = baseUrl.replace(/\/$/, '');
-    const results: { task: string; url: string | null; error: string | null }[] = [];
+    const cleanBase = baseUrl.replace(/\/$/, '')
+    const results: { task: string; url: string | null; error: string | null }[] = []
 
     for (const item of actionItems as IActionItem[]) {
         try {
@@ -52,35 +52,35 @@ export default defineEventHandler(async (event: H3Event) => {
                                     { type: 'hardBreak' },
                                     { type: 'text', text: `Deadline: ${item.deadline}` },
                                     { type: 'hardBreak' },
-                                    { type: 'text', text: `Created from MinutAI — ${meetingType ?? 'Meeting'}` }
-                                ]
-                            }
-                        ]
-                    }
-                }
-            };
+                                    { type: 'text', text: `Created from MinutAI — ${meetingType ?? 'Meeting'}` },
+                                ],
+                            },
+                        ],
+                    },
+                },
+            }
 
             const res = await fetch(`${cleanBase}/rest/api/3/issue`, {
                 method: 'POST',
                 headers,
-                body: JSON.stringify(payload)
-            });
+                body: JSON.stringify(payload),
+            })
 
-            const data = await res.json();
+            const data = await res.json()
 
             if (!res.ok) {
                 results.push({
                     task: item.task,
                     url: null,
-                    error: data.errorMessages?.[0] ?? data.errors?.summary ?? `HTTP ${res.status}`
-                });
+                    error: data.errorMessages?.[0] ?? data.errors?.summary ?? `HTTP ${res.status}`,
+                })
             } else {
-                results.push({ task: item.task, url: `${cleanBase}/browse/${data.key}`, error: null });
+                results.push({ task: item.task, url: `${cleanBase}/browse/${data.key}`, error: null })
             }
         } catch (err: unknown) {
-            results.push({ task: item.task, url: null, error: err instanceof Error ? err.message : 'Unknown error' });
+            results.push({ task: item.task, url: null, error: err instanceof Error ? err.message : 'Unknown error' })
         }
     }
 
-    return { results };
-});
+    return { results }
+})

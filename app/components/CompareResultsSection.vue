@@ -1,68 +1,68 @@
 <script setup lang="ts">
-import { isCompareError } from '~/composables/useCompare';
-import type { ICompareResponse } from '~/composables/useCompare';
-import type { IMeetingSummary, TPriority, TProvider } from '~/types';
+import { isCompareError } from '~/composables/useCompare'
+import type { ICompareResponse } from '~/composables/useCompare'
+import type { IMeetingSummary, TPriority, TProvider } from '~/types'
 
 const props = defineProps<{
-    compareResults: ICompareResponse;
-    submittedText: string;
-    providerName: (provider: TProvider) => string;
-    priorityConfig: Record<TPriority, { label: string; color: string; bg: string }>;
-}>();
+    compareResults: ICompareResponse
+    submittedText: string
+    providerName: (provider: TProvider) => string
+    priorityConfig: Record<TPriority, { label: string; color: string; bg: string }>
+}>()
 
 const emit = defineEmits<{
-    reset: [];
-}>();
+    reset: []
+}>()
 
-const compareSides = ['a', 'b'] as const;
-const transcriptExpanded = ref(false);
-const copiedKey = ref<string | null>(null);
+const compareSides = ['a', 'b'] as const
+const transcriptExpanded = ref(false)
+const copiedKey = ref<string | null>(null)
 
-const isError = isCompareError;
+const isError = isCompareError
 
 function valuesDiffer(a: unknown, b: unknown): boolean {
-    return JSON.stringify(a) !== JSON.stringify(b);
+    return JSON.stringify(a) !== JSON.stringify(b)
 }
 
 function getCompareResult(side: 'a' | 'b') {
-    return props.compareResults?.[side]?.result;
+    return props.compareResults?.[side]?.result
 }
 
 function getCompareDecisions(side: 'a' | 'b') {
-    const result = getCompareResult(side);
-    return result && !isError(result) ? (result.decisions ?? []) : [];
+    const result = getCompareResult(side)
+    return result && !isError(result) ? (result.decisions ?? []) : []
 }
 
 function getCompareMeetingType(side: 'a' | 'b'): string {
-    const result = getCompareResult(side);
-    return result && !isError(result) ? result.meetingType : '';
+    const result = getCompareResult(side)
+    return result && !isError(result) ? result.meetingType : ''
 }
 
 function getCompareKeyTopics(side: 'a' | 'b'): string[] {
-    const result = getCompareResult(side);
-    return result && !isError(result) ? (result.keyTopics ?? []) : [];
+    const result = getCompareResult(side)
+    return result && !isError(result) ? (result.keyTopics ?? []) : []
 }
 
 function getCompareSummary(side: 'a' | 'b'): string {
-    const result = getCompareResult(side);
-    return result && !isError(result) ? result.summary : '';
+    const result = getCompareResult(side)
+    return result && !isError(result) ? result.summary : ''
 }
 
 function getCompareActionItems(side: 'a' | 'b') {
-    const result = getCompareResult(side);
-    return result && !isError(result) ? (result.actionItems ?? []) : [];
+    const result = getCompareResult(side)
+    return result && !isError(result) ? (result.actionItems ?? []) : []
 }
 
 function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
-    const result = getCompareResult(side);
-    return result && !isError(result) ? result : undefined;
+    const result = getCompareResult(side)
+    return result && !isError(result) ? result : undefined
 }
 
 function flashCopied(key: string) {
-    copiedKey.value = key;
+    copiedKey.value = key
     setTimeout(() => {
-        copiedKey.value = null;
-    }, 2000);
+        copiedKey.value = null
+    }, 2000)
 }
 
 function buildMarkdown(s: IMeetingSummary, prov: string): string {
@@ -70,67 +70,67 @@ function buildMarkdown(s: IMeetingSummary, prov: string): string {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
-    });
-    const lines: string[] = [];
+    })
+    const lines: string[] = []
 
-    lines.push(`# 会议纪要 — ${s.meetingType}`);
-    lines.push(`*${date} · 分析模型：${prov}*`);
-    lines.push('');
-    lines.push('## 参与人');
-    lines.push(s.participants.map((p) => `- ${p}`).join('\n'));
-    lines.push('');
-    lines.push('## 关键议题');
-    lines.push(s.keyTopics.map((t) => `- ${t}`).join('\n'));
-    lines.push('');
-    lines.push('## 会议摘要');
-    lines.push(s.summary);
-    lines.push('');
-    lines.push('## 行动项');
+    lines.push(`# 会议纪要 — ${s.meetingType}`)
+    lines.push(`*${date} · 分析模型：${prov}*`)
+    lines.push('')
+    lines.push('## 参与人')
+    lines.push(s.participants.map((p) => `- ${p}`).join('\n'))
+    lines.push('')
+    lines.push('## 关键议题')
+    lines.push(s.keyTopics.map((t) => `- ${t}`).join('\n'))
+    lines.push('')
+    lines.push('## 会议摘要')
+    lines.push(s.summary)
+    lines.push('')
+    lines.push('## 行动项')
 
     s.actionItems.forEach((item) => {
-        lines.push(`- **[${item.priority.toUpperCase()}]** ${item.task}`);
-        lines.push(`  - 负责人：${item.owner}`);
-        lines.push(`  - 截止日期：${item.deadline}`);
-    });
+        lines.push(`- **[${item.priority.toUpperCase()}]** ${item.task}`)
+        lines.push(`  - 负责人：${item.owner}`)
+        lines.push(`  - 截止日期：${item.deadline}`)
+    })
 
-    lines.push('');
-    lines.push('## 决策事项');
+    lines.push('')
+    lines.push('## 决策事项')
 
     s.decisions.forEach((d, i) => {
-        lines.push(`${i + 1}. **${d.decision}**`);
-        if (d.rationale) lines.push(`   *${d.rationale}*`);
-        lines.push(`   — ${d.madeBy}`);
-    });
+        lines.push(`${i + 1}. **${d.decision}**`)
+        if (d.rationale) lines.push(`   *${d.rationale}*`)
+        lines.push(`   — ${d.madeBy}`)
+    })
 
-    return lines.join('\n');
+    return lines.join('\n')
 }
 
 async function copyToClipboard(text: string, key: string) {
     try {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(text)
     } catch {
-        const el = document.createElement('textarea');
-        el.value = text;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
+        const el = document.createElement('textarea')
+        el.value = text
+        document.body.appendChild(el)
+        el.select()
+        document.execCommand('copy')
+        document.body.removeChild(el)
     }
 
-    flashCopied(key);
+    flashCopied(key)
 }
 
 function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
-    const content = buildMarkdown(s, prov);
-    const blob = new Blob([content], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const content = buildMarkdown(s, prov)
+    const blob = new Blob([content], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
 
-    a.href = url;
-    a.download = `${s.meetingType.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-    flashCopied(key);
+    a.href = url
+    a.download = `${s.meetingType.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+    flashCopied(key)
 }
 </script>
 
@@ -274,12 +274,12 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
                                         class="export-btn"
                                         @click="
                                             () => {
-                                                const result = getCompareResultAsAny(side);
+                                                const result = getCompareResultAsAny(side)
                                                 if (result)
                                                     copyToClipboard(
                                                         buildMarkdown(result, props.providerName(props.compareResults[side].provider)),
                                                         `md-${side}`
-                                                    );
+                                                    )
                                             }
                                         "
                                     >
@@ -293,15 +293,21 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
                                         class="export-btn"
                                         @click="
                                             () => {
-                                                const result = getCompareResultAsAny(side);
+                                                const result = getCompareResultAsAny(side)
                                                 if (result)
-                                                    downloadMarkdown(result, props.providerName(props.compareResults[side].provider), `download-${side}`);
+                                                    downloadMarkdown(
+                                                        result,
+                                                        props.providerName(props.compareResults[side].provider),
+                                                        `download-${side}`
+                                                    )
                                             }
                                         "
                                     >
                                         <span class="export-btn-icon">↓</span>
                                         <span class="export-btn-label">下载 .md 文件</span>
-                                        <span class="export-btn-confirm" :class="{ visible: copiedKey === `download-${side}` }">✓ 已完成</span>
+                                        <span class="export-btn-confirm" :class="{ visible: copiedKey === `download-${side}` }">
+                                            ✓ 已完成
+                                        </span>
                                     </button>
                                 </div>
                             </div>

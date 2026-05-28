@@ -3,11 +3,11 @@
  * Creates work items in Azure DevOps from action items
  */
 
-import type { IAzureConfig } from '~/types';
+import type { IAzureConfig } from '~/types'
 
 export interface IAzureCreateResult {
-    id: string;
-    url: string;
+    id: string
+    url: string
 }
 
 /**
@@ -24,75 +24,70 @@ export interface IAzureCreateResult {
 export async function createAzureWorkItem(
     config: IAzureConfig,
     item: {
-        title: string;
-        description?: string;
-        assignee?: string;
-        dueDate?: string;
-        priority?: string;
+        title: string
+        description?: string
+        assignee?: string
+        dueDate?: string
+        priority?: string
     }
 ): Promise<IAzureCreateResult> {
     if (!config.enabled || !config.organization || !config.project || !config.pat) {
-        throw new Error('Azure DevOps is not properly configured');
+        throw new Error('Azure DevOps is not properly configured')
     }
 
-    const auth = Buffer.from(`:${config.pat}`).toString('base64');
+    const auth = Buffer.from(`:${config.pat}`).toString('base64')
 
     const priorityMap: Record<string, number> = {
         HIGH: 1,
         MEDIUM: 2,
         LOW: 3,
-    };
+    }
 
     const fields: Record<string, string | number | undefined> = {
         'System.Title': item.title,
         'System.WorkItemType': config.workItemType || 'Task',
         'System.AssignedTo': item.assignee || undefined,
         'Microsoft.VSTS.Common.Priority': priorityMap[item.priority || 'MEDIUM'] || 2,
-    };
+    }
 
     if (item.description) {
-        fields['System.Description'] = item.description;
+        fields['System.Description'] = item.description
     }
 
     if (item.dueDate) {
-        fields['Microsoft.VSTS.Scheduling.DueDate'] = item.dueDate;
+        fields['Microsoft.VSTS.Scheduling.DueDate'] = item.dueDate
     }
 
     // Filter out undefined values
-    Object.keys(fields).forEach((key) => fields[key] === undefined && delete fields[key]);
+    Object.keys(fields).forEach((key) => fields[key] === undefined && delete fields[key])
 
-    const response = await fetch(
-        `https://dev.azure.com/${config.organization}/${config.project}/_apis/wit/workitems?api-version=7.1`,
-        {
-            method: 'POST',
-            headers: {
-                'Authorization': `Basic ${auth}`,
-                'Content-Type': 'application/json-patch+json',
-            },
-            body: JSON.stringify(
-                Object.entries(fields).map(([key, value]) => ({
-                    op: 'add',
-                    path: `/fields/${key}`,
-                    value,
-                }))
-            ),
-        }
-    );
+    const response = await fetch(`https://dev.azure.com/${config.organization}/${config.project}/_apis/wit/workitems?api-version=7.1`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Basic ${auth}`,
+            'Content-Type': 'application/json-patch+json',
+        },
+        body: JSON.stringify(
+            Object.entries(fields).map(([key, value]) => ({
+                op: 'add',
+                path: `/fields/${key}`,
+                value,
+            }))
+        ),
+    })
 
     if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json()
 
-        throw new Error(
-            `Azure DevOps API error: ${error.message || response.statusText}`
-        );
+        throw new Error(`Azure DevOps API error: ${error.message || response.statusText}`)
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
     return {
         id: String(data.id),
         url: data.url,
-    };
+    }
 }
 
 /**
@@ -101,30 +96,26 @@ export async function createAzureWorkItem(
  * @param {string} workItemId - The ID of the work item to update
  * @param {string} status - The new status for the work item
  */
-export async function updateAzureWorkItemState(
-    config: IAzureConfig,
-    workItemId: string,
-    status: string
-): Promise<void> {
+export async function updateAzureWorkItemState(config: IAzureConfig, workItemId: string, status: string): Promise<void> {
     if (!config.enabled || !config.organization || !config.project || !config.pat) {
-        throw new Error('Azure DevOps is not properly configured');
+        throw new Error('Azure DevOps is not properly configured')
     }
 
-    const auth = Buffer.from(`:${config.pat}`).toString('base64');
+    const auth = Buffer.from(`:${config.pat}`).toString('base64')
 
     // Map application status to Azure work item states
     const statusMap: Record<string, string> = {
         TODO: 'New',
         IN_PROGRESS: 'Active',
         DONE: 'Closed',
-    };
+    }
 
-    const targetState = statusMap[status];
+    const targetState = statusMap[status]
 
     if (!targetState) {
-        console.warn(`Unknown status: ${status}, skipping Azure update`);
+        console.warn(`Unknown status: ${status}, skipping Azure update`)
 
-        return;
+        return
     }
 
     const response = await fetch(
@@ -132,7 +123,7 @@ export async function updateAzureWorkItemState(
         {
             method: 'PATCH',
             headers: {
-                'Authorization': `Basic ${auth}`,
+                Authorization: `Basic ${auth}`,
                 'Content-Type': 'application/json-patch+json',
             },
             body: JSON.stringify([
@@ -143,13 +134,11 @@ export async function updateAzureWorkItemState(
                 },
             ]),
         }
-    );
+    )
 
     if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json()
 
-        console.warn(
-            `Failed to update Azure work item state: ${error.message || response.statusText}`
-        );
+        console.warn(`Failed to update Azure work item state: ${error.message || response.statusText}`)
     }
 }
