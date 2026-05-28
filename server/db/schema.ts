@@ -134,9 +134,36 @@ export const aiLogs = sqliteTable(
     })
 )
 
+// ── judge_results ─────────────────────────────────────────────────────────────
+// Stores LLM-as-judge evaluation results for compare-mode runs.
+
+export const judgeResults = sqliteTable(
+    'judge_results',
+    {
+        id: text('id').primaryKey(),
+        providerA: text('provider_a').notNull(),
+        providerB: text('provider_b').notNull(),
+        judgeProvider: text('judge_provider').notNull(),
+        winner: text('winner').notNull(), // 'model_a' | 'model_b' | 'tie'
+        scoresA: text('scores_a').notNull(), // JSON: { completeness, accuracy, actionability, conciseness, overall }
+        scoresB: text('scores_b').notNull(),
+        reason: text('reason').notNull(),
+        createdAt: text('created_at')
+            .notNull()
+            .default(sql`CURRENT_TIMESTAMP`),
+    },
+    (table) => ({
+        providerAIdx: index('judge_results_provider_a_idx').on(table.providerA),
+        providerBIdx: index('judge_results_provider_b_idx').on(table.providerB),
+        judgeProviderIdx: index('judge_results_judge_provider_idx').on(table.judgeProvider),
+        createdAtIdx: index('judge_results_created_at_idx').on(table.createdAt),
+    })
+)
+
 // ── Export types for use in server and client code ──────────────────────────────
 export type IUser = typeof users.$inferSelect
 export type IMeeting = typeof meetings.$inferSelect
 export type IIntegrationConfig = typeof integrationsConfig.$inferSelect
 export type IActionItem = typeof actionItems.$inferSelect
 export type IAiLog = typeof aiLogs.$inferSelect
+export type IJudgeResult = typeof judgeResults.$inferSelect
