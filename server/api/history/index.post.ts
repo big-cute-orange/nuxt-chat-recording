@@ -1,29 +1,29 @@
 // POST /api/history
 // Creates a new meeting history entry and returns it.
 
-import { defineEventHandler, readBody, createError, type H3Event } from 'h3';
-import { useDb } from '#server/utils/db';
-import { meetings } from '#server/db/schema';
-import type { IHistoryEntry } from '~/types';
+import { defineEventHandler, readBody, createError, type H3Event } from 'h3'
+import { useDb } from '#server/utils/db'
+import { meetings } from '#server/db/schema'
+import type { IHistoryEntry } from '~/types'
 
 export default defineEventHandler(async (event: H3Event) => {
-    const db = useDb();
-    const body = await readBody(event);
-    const { summary, transcript, provider, mode, date } = body;
+    const db = useDb()
+    const body = await readBody(event)
+    const { summary, transcript, provider, mode, date } = body
 
     if (!summary || !provider) {
-        throw createError({ statusCode: 400, message: 'summary and provider are required.' });
+        throw createError({ statusCode: 400, message: 'summary and provider are required.' })
     }
 
-    const session = await getUserSession(event);
-    const userId = session?.user?.id;
+    const session = await getUserSession(event)
+    const userId = session?.user?.id
 
     if (!userId) {
-        throw createError({ statusCode: 401, message: 'Login required.' });
+        throw createError({ statusCode: 401, message: 'Login required.' })
     }
 
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
+    const id = crypto.randomUUID()
+    const now = new Date().toISOString()
 
     const entry = {
         id,
@@ -36,9 +36,9 @@ export default defineEventHandler(async (event: H3Event) => {
         transcript: transcript ?? '',
         summary: JSON.stringify(summary),
         createdAt: now,
-    };
+    }
 
-    await db.insert(meetings).values(entry);
+    await db.insert(meetings).values(entry)
 
     const result: IHistoryEntry = {
         id,
@@ -49,7 +49,7 @@ export default defineEventHandler(async (event: H3Event) => {
         transcript: entry.transcript,
         summary,
         mode: entry.mode as IHistoryEntry['mode'],
-    };
+    }
 
-    return result;
-});
+    return result
+})

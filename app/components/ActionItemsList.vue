@@ -1,67 +1,67 @@
 <script setup lang="ts">
-import type { IActionItem } from '#server/db/schema';
+import type { IActionItem } from '#server/db/schema'
 
 interface IProps {
-    meetingId: string;
+    meetingId: string
 }
 
 interface ICreateActionItemResponse {
-    items: IActionItem[];
+    items: IActionItem[]
 }
 
-const props = defineProps<IProps>();
+const props = defineProps<IProps>()
 
-const items = ref<IActionItem[]>([]);
-const isLoading = ref(false);
-const error = ref('');
-const isCreating = ref(false);
+const items = ref<IActionItem[]>([])
+const isLoading = ref(false)
+const error = ref('')
+const isCreating = ref(false)
 
-const newItemTitle = ref('');
-const newItemDescription = ref('');
-const newItemAssignee = ref('');
-const newItemPriority = ref<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
+const newItemTitle = ref('')
+const newItemDescription = ref('')
+const newItemAssignee = ref('')
+const newItemPriority = ref<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM')
 
 const loadItems = async () => {
-    isLoading.value = true;
-    error.value = '';
+    isLoading.value = true
+    error.value = ''
 
     try {
-        items.value = await $fetch(`/api/action-items?meetingId=${props.meetingId}`);
+        items.value = await $fetch(`/api/action-items?meetingId=${props.meetingId}`)
     } catch (err: unknown) {
-        console.error('Failed to load action items:', err);
+        console.error('Failed to load action items:', err)
 
-        error.value = (err as Error).message || 'Failed to load action items';
+        error.value = (err as Error).message || 'Failed to load action items'
     } finally {
-        isLoading.value = false;
+        isLoading.value = false
     }
-};
+}
 
 const updateStatus = async (item: IActionItem, newStatus: string) => {
     try {
         const updated = await $fetch(`/api/action-items/${item.id}`, {
             method: 'PATCH',
             body: { status: newStatus },
-        });
+        })
 
-        const idx = items.value.findIndex((i: IActionItem) => i.id === item.id);
+        const idx = items.value.findIndex((i: IActionItem) => i.id === item.id)
 
         if (idx >= 0) {
-            items.value[idx] = updated as IActionItem;
+            items.value[idx] = updated as IActionItem
         }
     } catch (err: unknown) {
-        error.value = `Failed to update status: ${(err as Error).message}`;
+        error.value = `Failed to update status: ${(err as Error).message}`
     }
-};
+}
 
 const createActionItem = async () => {
     if (!newItemTitle.value.trim()) {
-        error.value = 'Title is required';
+        error.value = 'Title is required'
 
-        return;
+        return
     }
 
-    isCreating.value = true;
-    error.value = '';
+    isCreating.value = true
+    error.value = ''
 
     try {
         const response = await $fetch('/api/action-items', {
@@ -77,29 +77,32 @@ const createActionItem = async () => {
                     },
                 ],
             },
-        });
+        })
 
-        if ((response as unknown as ICreateActionItemResponse).items && (response as unknown as ICreateActionItemResponse).items.length > 0) {
-            await loadItems();
+        if (
+            (response as unknown as ICreateActionItemResponse).items &&
+            (response as unknown as ICreateActionItemResponse).items.length > 0
+        ) {
+            await loadItems()
 
             // Reset form
-            newItemTitle.value = '';
-            newItemDescription.value = '';
-            newItemAssignee.value = '';
-            newItemPriority.value = 'MEDIUM';
+            newItemTitle.value = ''
+            newItemDescription.value = ''
+            newItemAssignee.value = ''
+            newItemPriority.value = 'MEDIUM'
         }
     } catch (err: unknown) {
-        console.error('Failed to create action item:', err);
+        console.error('Failed to create action item:', err)
 
-        error.value = `Failed to create action item: ${(err as Error).message}`;
+        error.value = `Failed to create action item: ${(err as Error).message}`
     } finally {
-        isCreating.value = false;
+        isCreating.value = false
     }
-};
+}
 
 const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) {
-        return '';
+        return ''
     }
 
     try {
@@ -107,41 +110,42 @@ const formatDate = (dateStr: string | null | undefined) => {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
-        });
+        })
     } catch {
-        return dateStr;
+        return dateStr
     }
-};
+}
 
 const getPriorityColor = (priority: string) => {
     switch (priority) {
         case 'HIGH':
-            return 'priority-high';
+            return 'priority-high'
         case 'MEDIUM':
-            return 'priority-medium';
+            return 'priority-medium'
         case 'LOW':
-            return 'priority-low';
+            return 'priority-low'
         default:
-            return 'priority-medium';
+            return 'priority-medium'
     }
-};
+}
 
 onMounted(() => {
-    loadItems();
-});
+    loadItems()
+})
 
-watch(() => props.meetingId, () => {
-    loadItems();
-});
+watch(
+    () => props.meetingId,
+    () => {
+        loadItems()
+    }
+)
 </script>
 
 <template>
     <div class="action-items-list">
         <div class="header">
             <h3>Action Items</h3>
-            <button v-if="items.length > 0" class="refresh-btn" :disabled="isLoading" @click="loadItems">
-                🔄
-            </button>
+            <button v-if="items.length > 0" class="refresh-btn" :disabled="isLoading" @click="loadItems">🔄</button>
         </div>
 
         <div v-if="error" class="error">{{ error }}</div>
@@ -188,11 +192,7 @@ watch(() => props.meetingId, () => {
                     </select>
                 </div>
 
-                <button
-                    class="btn-create"
-                    :disabled="isCreating || !newItemTitle.trim()"
-                    @click="createActionItem"
-                >
+                <button class="btn-create" :disabled="isCreating || !newItemTitle.trim()" @click="createActionItem">
                     {{ isCreating ? 'Creating...' : 'Add' }}
                 </button>
             </div>
@@ -206,18 +206,13 @@ watch(() => props.meetingId, () => {
 
         <!-- Items List -->
         <div v-else class="items">
-            <div
-                v-for="item in items"
-                :key="item.id"
-                class="item"
-                :class="[item.status.toLowerCase(), getPriorityColor(item.priority)]"
-            >
+            <div v-for="item in items" :key="item.id" class="item" :class="[item.status.toLowerCase(), getPriorityColor(item.priority)]">
                 <div class="item-header">
                     <input
                         type="checkbox"
                         :checked="item.status === 'DONE'"
                         class="item-checkbox"
-                        @change="updateStatus(item, ($event.target).checked ? 'DONE' : 'TODO')"
+                        @change="updateStatus(item, $event.target.checked ? 'DONE' : 'TODO')"
                     />
                     <h4 class="item-title">{{ item.title }}</h4>
                     <a

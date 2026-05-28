@@ -1,32 +1,32 @@
 <script setup lang="ts">
-import type { IHistoryEntry } from '~/types/index';
+import type { IHistoryEntry } from '~/types/index'
 
 const props = defineProps<{
-    history: IHistoryEntry[];
-    activeHistoryId: string | null;
-    historyTotal: number;
-    historyHasMore: boolean;
-    historyLoading: boolean;
-    providerName: (provider: IHistoryEntry['provider']) => string;
-    formatDate: (date: string, withTime?: boolean) => string;
-}>();
+    history: IHistoryEntry[]
+    activeHistoryId: string | null
+    historyTotal: number
+    historyHasMore: boolean
+    historyLoading: boolean
+    providerName: (provider: IHistoryEntry['provider']) => string
+    formatDate: (date: string, withTime?: boolean) => string
+}>()
 
 const emit = defineEmits<{
-    clear: [];
-    loadMore: [];
-    openEntry: [entry: IHistoryEntry];
-    deleteEntry: [id: string];
-}>();
+    clear: []
+    loadMore: []
+    openEntry: [entry: IHistoryEntry]
+    deleteEntry: [id: string]
+}>()
 
-const open = ref(false);
+const open = ref(false)
 
 function closeSidebar() {
-    open.value = false;
+    open.value = false
 }
 
 function handleOpenEntry(entry: IHistoryEntry) {
-    emit('openEntry', entry);
-    closeSidebar();
+    emit('openEntry', entry)
+    closeSidebar()
 }
 </script>
 
@@ -104,7 +104,12 @@ function handleOpenEntry(entry: IHistoryEntry) {
     border-radius: 8px;
     box-sizing: border-box;
     color: var(--text-muted);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        sans-serif;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;

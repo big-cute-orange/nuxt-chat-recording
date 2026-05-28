@@ -3,17 +3,17 @@
  * Creates issues in Linear from action items
  */
 
-import type { ILinearConfig } from '~/types';
+import type { ILinearConfig } from '~/types'
 
 export interface ILinearCreateResult {
-    id: string;
-    identifier: string;
-    url: string;
+    id: string
+    identifier: string
+    url: string
 }
 
 export interface ILinearState {
-    id: string;
-    name: string;
+    id: string
+    name: string
 }
 
 /**
@@ -30,22 +30,22 @@ export interface ILinearState {
 export async function createLinearIssue(
     config: ILinearConfig,
     item: {
-        title: string;
-        description?: string;
-        assignee?: string;
-        dueDate?: string;
-        priority?: string;
+        title: string
+        description?: string
+        assignee?: string
+        dueDate?: string
+        priority?: string
     }
 ): Promise<ILinearCreateResult> {
     if (!config.enabled || !config.apiKey || !config.teamId) {
-        throw new Error('Linear is not properly configured');
+        throw new Error('Linear is not properly configured')
     }
 
     const priorityMap: Record<string, number> = {
         HIGH: 3, // Urgent
         MEDIUM: 2, // Medium
         LOW: 1, // No Priority
-    };
+    }
 
     const query = `
         mutation CreateIssue($input: IssueCreateInput!) {
@@ -59,12 +59,12 @@ export async function createLinearIssue(
                 success
             }
         }
-    `;
+    `
 
     const response = await fetch('https://api.linear.app/graphql', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${config.apiKey}`,
+            Authorization: `Bearer ${config.apiKey}`,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -79,29 +79,29 @@ export async function createLinearIssue(
                 },
             },
         }),
-    });
+    })
 
     if (!response.ok) {
-        throw new Error(`Linear API error: ${response.statusText}`);
+        throw new Error(`Linear API error: ${response.statusText}`)
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
     if (data.errors) {
-        throw new Error(`Linear GraphQL error: ${data.errors[0].message}`);
+        throw new Error(`Linear GraphQL error: ${data.errors[0].message}`)
     }
 
     if (!data.data?.issueCreate?.success) {
-        throw new Error('Failed to create Linear issue');
+        throw new Error('Failed to create Linear issue')
     }
 
-    const issue = data.data.issueCreate.issue;
+    const issue = data.data.issueCreate.issue
 
     return {
         id: issue.id,
         identifier: issue.identifier,
         url: issue.url,
-    };
+    }
 }
 
 /**
@@ -111,13 +111,9 @@ export async function createLinearIssue(
  * @param {string} status - The target status (TODO, IN_PROGRESS, DONE)
  * @returns {Promise<void>}
  */
-export async function updateLinearIssueState(
-    config: ILinearConfig,
-    issueId: string,
-    status: string
-): Promise<void> {
+export async function updateLinearIssueState(config: ILinearConfig, issueId: string, status: string): Promise<void> {
     if (!config.enabled || !config.apiKey) {
-        throw new Error('Linear is not properly configured');
+        throw new Error('Linear is not properly configured')
     }
 
     // Maps application status to Linear state names
@@ -125,14 +121,14 @@ export async function updateLinearIssueState(
         TODO: 'Backlog',
         IN_PROGRESS: 'In Progress',
         DONE: 'Done',
-    };
+    }
 
-    const targetState = statusMap[status];
+    const targetState = statusMap[status]
 
     if (!targetState) {
-        console.warn(`Unknown status: ${status}, skipping Linear update`);
+        console.warn(`Unknown status: ${status}, skipping Linear update`)
 
-        return;
+        return
     }
 
     // First, fetch available states for the team
@@ -147,12 +143,12 @@ export async function updateLinearIssueState(
                 }
             }
         }
-    `;
+    `
 
     const statesResponse = await fetch('https://api.linear.app/graphql', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${config.apiKey}`,
+            Authorization: `Bearer ${config.apiKey}`,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -161,23 +157,23 @@ export async function updateLinearIssueState(
                 teamId: config.teamId,
             },
         }),
-    });
+    })
 
-    const statesData = await statesResponse.json();
+    const statesData = await statesResponse.json()
 
     if (statesData.errors) {
-        console.warn(`Failed to fetch Linear states: ${statesData.errors[0].message}`);
+        console.warn(`Failed to fetch Linear states: ${statesData.errors[0].message}`)
 
-        return;
+        return
     }
 
-    const states = (statesData.data?.team?.states?.nodes || []) as ILinearState[];
-    const targetStateObj = states.find((s: ILinearState) => s.name === targetState);
+    const states = (statesData.data?.team?.states?.nodes || []) as ILinearState[]
+    const targetStateObj = states.find((s: ILinearState) => s.name === targetState)
 
     if (!targetStateObj) {
-        console.warn(`State ${targetState} not found in Linear`);
+        console.warn(`State ${targetState} not found in Linear`)
 
-        return;
+        return
     }
 
     // Update the issue state
@@ -192,12 +188,12 @@ export async function updateLinearIssueState(
                 }
             }
         }
-    `;
+    `
 
     const updateResponse = await fetch('https://api.linear.app/graphql', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${config.apiKey}`,
+            Authorization: `Bearer ${config.apiKey}`,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -209,11 +205,11 @@ export async function updateLinearIssueState(
                 },
             },
         }),
-    });
+    })
 
-    const updateData = await updateResponse.json();
+    const updateData = await updateResponse.json()
 
     if (updateData.errors) {
-        console.warn(`Failed to update Linear issue state: ${updateData.errors[0].message}`);
+        console.warn(`Failed to update Linear issue state: ${updateData.errors[0].message}`)
     }
 }

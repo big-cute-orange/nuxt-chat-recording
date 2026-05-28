@@ -1,59 +1,59 @@
 <script setup lang="ts">
-import type { TProvider } from '~/types/index';
+import type { TProvider } from '~/types/index'
 
-const { data: stats } = useFetch('/api/dashboard/stats');
+const { data: stats } = useFetch('/api/dashboard/stats')
 
 // ── 计算指标 ──────────────────────────────────────────────────────────────────
-const totalMeetings = computed(() => stats.value?.totalMeetings ?? 0);
-const totalActionItems = computed(() => stats.value?.totalActionItems ?? 0);
-const totalDecisions = computed(() => stats.value?.totalDecisions ?? 0);
-const totalParticipants = computed(() => stats.value?.totalParticipants ?? 0);
-const actionsByOwner = computed(() => stats.value?.actionsByOwner ?? []);
-const maxOwnerCount = computed(() => actionsByOwner.value[0]?.[1] ?? 1);
-const providerUsage = computed(() => stats.value?.providerUsage ?? []);
-const topTopics = computed(() => stats.value?.topTopics ?? []);
-const meetingTypes = computed(() => stats.value?.meetingTypes ?? []);
-const priorityBreakdown = computed(() => stats.value?.priorityBreakdown ?? []);
-const activityData = computed(() => stats.value?.activityData ?? []);
-const maxActivity = computed(() => Math.max(...activityData.value.map(d => d.count), 1));
-const recentMeetings = computed(() => stats.value?.recentMeetings ?? []);
+const totalMeetings = computed(() => stats.value?.totalMeetings ?? 0)
+const totalActionItems = computed(() => stats.value?.totalActionItems ?? 0)
+const totalDecisions = computed(() => stats.value?.totalDecisions ?? 0)
+const totalParticipants = computed(() => stats.value?.totalParticipants ?? 0)
+const actionsByOwner = computed(() => stats.value?.actionsByOwner ?? [])
+const maxOwnerCount = computed(() => actionsByOwner.value[0]?.[1] ?? 1)
+const providerUsage = computed(() => stats.value?.providerUsage ?? [])
+const topTopics = computed(() => stats.value?.topTopics ?? [])
+const meetingTypes = computed(() => stats.value?.meetingTypes ?? [])
+const priorityBreakdown = computed(() => stats.value?.priorityBreakdown ?? [])
+const activityData = computed(() => stats.value?.activityData ?? [])
+const maxActivity = computed(() => Math.max(...activityData.value.map((d) => d.count), 1))
+const recentMeetings = computed(() => stats.value?.recentMeetings ?? [])
 
 // ── 工具函数 ───────────────────────────────────────────────────────────────────
 const providerLabels: Record<TProvider, string> = {
     deepseek: 'DeepSeek',
     qwen: '通义千问',
     doubao: '豆包',
-};
+}
 
 const providerColors: Record<TProvider, string> = {
     deepseek: '#2563eb',
     qwen: '#7c3aed',
     doubao: '#0891b2',
-};
+}
 
 function formatRelative(iso: string) {
-    const diff = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diff / 60000);
+    const diff = Date.now() - new Date(iso).getTime()
+    const mins = Math.floor(diff / 60000)
 
-    if (mins < 60) return `${mins}m ago`;
+    if (mins < 60) return `${mins}m ago`
 
-    const hours = Math.floor(mins / 60);
+    const hours = Math.floor(mins / 60)
 
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 24) return `${hours}h ago`
 
-    return `${Math.floor(hours / 24)}d ago`;
+    return `${Math.floor(hours / 24)}d ago`
 }
 
 function barHeight(count: number) {
-    return Math.max((count / maxActivity.value) * 100, count > 0 ? 8 : 0);
+    return Math.max((count / maxActivity.value) * 100, count > 0 ? 8 : 0)
 }
 
 function getProviderColor(provider: string): string {
-    return providerColors[provider as TProvider] ?? '#999';
+    return providerColors[provider as TProvider] ?? '#999'
 }
 
 function getProviderLabel(provider: string): string {
-    return providerLabels[provider as TProvider] ?? provider;
+    return providerLabels[provider as TProvider] ?? provider
 }
 </script>
 

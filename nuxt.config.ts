@@ -31,6 +31,7 @@ export default defineNuxtConfig({
 
     runtimeConfig: {
         // Server-side only — never exposed to the client
+        openaiApiKey: process.env.OPENAI_API_KEY || '',
         deepseekApiKey: process.env.DEEPSEEK_API_KEY || '',
         qwenApiKey: process.env.QWEN_API_KEY || '',
         dobaoApiKey: process.env.DOBAO_API_KEY || '',
@@ -58,4 +59,4 @@ export default defineNuxtConfig({
             crawlLinks: false,
         },
     },
-});
+})

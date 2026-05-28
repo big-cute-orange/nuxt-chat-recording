@@ -7,5 +7,13 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "typeRoots": ["./app/types"]
-    }
+    },
+    "include": [
+        ".nuxt/nuxt.d.ts",
+        ".nuxt/nuxt.node.d.ts",
+        "nuxt.config.*",
+        "app/**/*",
+        "server/**/*",
+        "shared/**/*"
+    ]
 }

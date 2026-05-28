@@ -1,5 +1,5 @@
-import { sqliteTable, text, integer, primaryKey, unique, index } from 'drizzle-orm/sqlite-core';
-import { sql } from 'drizzle-orm';
+import { sqliteTable, text, integer, primaryKey, unique, index } from 'drizzle-orm/sqlite-core'
+import { sql } from 'drizzle-orm'
 
 // ── users ─────────────────────────────────────────────────────────────────────
 // OAuth user profile. Created on first login, updated periodically.
@@ -15,14 +15,18 @@ export const users = sqliteTable(
         name: text('name'),
         email: text('email'), // nullable — local users may not have email
         avatarUrl: text('avatar_url'),
-        createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`), // ISO string
-        updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`), // ISO string
+        createdAt: text('created_at')
+            .notNull()
+            .default(sql`CURRENT_TIMESTAMP`), // ISO string
+        updatedAt: text('updated_at')
+            .notNull()
+            .default(sql`CURRENT_TIMESTAMP`), // ISO string
     },
     (table) => ({
         usernameIdx: index('users_username_idx').on(table.username),
         providerIdx: index('users_provider_idx').on(table.provider),
     })
-);
+)
 
 // ── meetings ──────────────────────────────────────────────────────────────────
 // User meeting transcripts and summaries. userId is nullable for anonymous users.
@@ -39,13 +43,15 @@ export const meetings = sqliteTable(
         charCount: integer('char_count').notNull().default(0),
         transcript: text('transcript').notNull().default(''),
         summary: text('summary').notNull(), // JSON-serialised IMeetingSummary
-        createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`), // ISO string
+        createdAt: text('created_at')
+            .notNull()
+            .default(sql`CURRENT_TIMESTAMP`), // ISO string
     },
     (table) => ({
         userIdIdx: index('meetings_user_id_idx').on(table.userId),
         dateIdx: index('meetings_date_idx').on(table.date),
     })
-);
+)
 
 // ── integrations_config ───────────────────────────────────────────────────────
 // Per-user integration credentials. One row per (userId, service) pair.
@@ -58,14 +64,16 @@ export const integrationsConfig = sqliteTable(
         userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
         service: text('service').notNull(), // 'jira' | 'linear' | 'notion' | 'azure'
         config: text('config').notNull(), // JSON-serialised service-specific config
-        updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`), // ISO string
+        updatedAt: text('updated_at')
+            .notNull()
+            .default(sql`CURRENT_TIMESTAMP`), // ISO string
     },
     (table) => ({
         userServiceUq: unique('integrations_config_user_service_uq').on(table.userId, table.service),
         userIdIdx: index('integrations_config_user_id_idx').on(table.userId),
         serviceIdx: index('integrations_config_service_idx').on(table.service),
     })
-);
+)
 
 // ── action_items ──────────────────────────────────────────────────────────────
 // Action items extracted from meetings and synced to external services.
@@ -88,18 +96,47 @@ export const actionItems = sqliteTable(
         externalService: text('external_service'), // 'jira' | 'linear' | 'notion' | 'azure'
         externalServiceId: text('external_service_id'), // Issue ID in external system
         externalUrl: text('external_url'), // Link to ticket
-        createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-        updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+        createdAt: text('created_at')
+            .notNull()
+            .default(sql`CURRENT_TIMESTAMP`),
+        updatedAt: text('updated_at')
+            .notNull()
+            .default(sql`CURRENT_TIMESTAMP`),
     },
     (table) => ({
         meetingIdIdx: index('action_items_meeting_id_idx').on(table.meetingId),
         userIdIdx: index('action_items_user_id_idx').on(table.userId),
         externalServiceIdx: index('action_items_external_service_idx').on(table.externalService),
     })
-);
+)
+
+// ── ai_logs ───────────────────────────────────────────────────────────────────
+// Records every AI call for prompt version tracking and validation analysis.
+
+export const aiLogs = sqliteTable(
+    'ai_logs',
+    {
+        id: text('id').primaryKey(),
+        meetingId: text('meeting_id').references(() => meetings.id, { onDelete: 'cascade' }),
+        provider: text('provider').notNull(),
+        promptVersion: text('prompt_version').notNull(),
+        rawOutput: text('raw_output').notNull(),
+        validationPassed: integer('validation_passed', { mode: 'boolean' }).notNull(),
+        validationErrors: text('validation_errors'),
+        createdAt: text('created_at')
+            .notNull()
+            .default(sql`CURRENT_TIMESTAMP`),
+    },
+    (table) => ({
+        providerIdx: index('ai_logs_provider_idx').on(table.provider),
+        promptVersionIdx: index('ai_logs_prompt_version_idx').on(table.promptVersion),
+        createdAtIdx: index('ai_logs_created_at_idx').on(table.createdAt),
+    })
+)
 
 // ── Export types for use in server and client code ──────────────────────────────
-export type IUser = typeof users.$inferSelect;
-export type IMeeting = typeof meetings.$inferSelect;
-export type IIntegrationConfig = typeof integrationsConfig.$inferSelect;
-export type IActionItem = typeof actionItems.$inferSelect;
+export type IUser = typeof users.$inferSelect
+export type IMeeting = typeof meetings.$inferSelect
+export type IIntegrationConfig = typeof integrationsConfig.$inferSelect
+export type IActionItem = typeof actionItems.$inferSelect
+export type IAiLog = typeof aiLogs.$inferSelect

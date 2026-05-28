@@ -1,109 +1,109 @@
-import type { IHistoryEntry, IHistoryPage, IMeetingSummary } from '~/types';
+import type { IHistoryEntry, IHistoryPage, IMeetingSummary } from '~/types'
 
-const LEGACY_KEY = 'minutai:history';
-const LOCAL_LIMIT = 100;
+const LEGACY_KEY = 'minutai:history'
+const LOCAL_LIMIT = 100
 
 export function useHistory() {
-    const { user, isReady, fetchSession } = useAuth();
-    const history = ref<IHistoryEntry[]>([]);
-    const total = ref(0);
-    const page = ref(1);
-    const limit = ref(20);
-    const loading = ref(false);
-    const error = ref<string | null>(null);
-    const isLoggedIn = computed(() => Boolean(user.value?.id));
+    const { user, isReady, fetchSession } = useAuth()
+    const history = ref<IHistoryEntry[]>([])
+    const total = ref(0)
+    const page = ref(1)
+    const limit = ref(20)
+    const loading = ref(false)
+    const error = ref<string | null>(null)
+    const isLoggedIn = computed(() => Boolean(user.value?.id))
 
     async function ensureAuthReady() {
         if (!isReady.value) {
-            await fetchSession();
+            await fetchSession()
         }
     }
 
     function readLocalHistory(): IHistoryEntry[] {
         if (typeof localStorage === 'undefined') {
-            return [];
+            return []
         }
 
         try {
-            const raw = localStorage.getItem(LEGACY_KEY);
+            const raw = localStorage.getItem(LEGACY_KEY)
             if (!raw) {
-                return [];
+                return []
             }
 
-            const entries = JSON.parse(raw) as IHistoryEntry[];
-            return Array.isArray(entries) ? entries : [];
+            const entries = JSON.parse(raw) as IHistoryEntry[]
+            return Array.isArray(entries) ? entries : []
         } catch {
-            return [];
+            return []
         }
     }
 
     function writeLocalHistory(entries: IHistoryEntry[]) {
         if (typeof localStorage === 'undefined') {
-            return;
+            return
         }
 
-        localStorage.setItem(LEGACY_KEY, JSON.stringify(entries.slice(0, LOCAL_LIMIT)));
+        localStorage.setItem(LEGACY_KEY, JSON.stringify(entries.slice(0, LOCAL_LIMIT)))
     }
 
     // ── Fetch ─────────────────────────────────────────────────────────────────
     async function load(p = 1) {
-        await ensureAuthReady();
+        await ensureAuthReady()
 
         if (!isLoggedIn.value) {
-            const entries = readLocalHistory();
+            const entries = readLocalHistory()
 
-            history.value = entries;
-            total.value = entries.length;
-            page.value = 1;
-            error.value = null;
-            return;
+            history.value = entries
+            total.value = entries.length
+            page.value = 1
+            error.value = null
+            return
         }
 
-        loading.value = true;
-        error.value = null;
+        loading.value = true
+        error.value = null
 
         try {
-            const data = await $fetch<IHistoryPage>('/api/history', { query: { page: p, limit: limit.value } });
+            const data = await $fetch<IHistoryPage>('/api/history', { query: { page: p, limit: limit.value } })
 
-            history.value = data.data;
-            total.value = data.total;
-            page.value = data.page;
+            history.value = data.data
+            total.value = data.total
+            page.value = data.page
         } catch (err: unknown) {
-            error.value = (err as Error)?.message ?? 'Failed to load history.';
+            error.value = (err as Error)?.message ?? 'Failed to load history.'
         } finally {
-            loading.value = false;
+            loading.value = false
         }
     }
 
     async function loadMore() {
-        await ensureAuthReady();
+        await ensureAuthReady()
 
         if (!isLoggedIn.value) {
-            return;
+            return
         }
 
         if (history.value.length >= total.value) {
-            return;
+            return
         }
 
-        loading.value = true;
+        loading.value = true
 
         try {
-            const nextPage = page.value + 1;
+            const nextPage = page.value + 1
             const data = await $fetch<IHistoryPage>('/api/history', {
                 query: {
                     page: nextPage,
-                    limit: limit.value
-                }
-            });
+                    limit: limit.value,
+                },
+            })
 
-            history.value = [...history.value, ...data.data];
-            total.value = data.total;
-            page.value = data.page;
+            history.value = [...history.value, ...data.data]
+            total.value = data.total
+            page.value = data.page
         } catch (err: unknown) {
-            error.value = (err as Error)?.message ?? 'Failed to load more history.';
+            error.value = (err as Error)?.message ?? 'Failed to load more history.'
         } finally {
-            loading.value = false;
+            loading.value = false
         }
     }
 
@@ -114,7 +114,7 @@ export function useHistory() {
         provider: IHistoryEntry['provider'],
         mode: 'single' | 'compare' = 'single'
     ): Promise<string> {
-        await ensureAuthReady();
+        await ensureAuthReady()
 
         if (!isLoggedIn.value) {
             const entry: IHistoryEntry = {
@@ -126,96 +126,96 @@ export function useHistory() {
                 transcript,
                 summary,
                 mode,
-            };
+            }
 
-            const entries = [entry, ...readLocalHistory()];
-            writeLocalHistory(entries);
-            history.value = entries.slice(0, LOCAL_LIMIT);
-            total.value = history.value.length;
-            page.value = 1;
-            return entry.id;
+            const entries = [entry, ...readLocalHistory()]
+            writeLocalHistory(entries)
+            history.value = entries.slice(0, LOCAL_LIMIT)
+            total.value = history.value.length
+            page.value = 1
+            return entry.id
         }
 
         const entry = await $fetch<IHistoryEntry>('/api/history', {
             method: 'POST',
             body: { summary, transcript, provider, mode },
-        });
+        })
 
-        history.value.unshift(entry);
-        total.value++;
+        history.value.unshift(entry)
+        total.value++
 
-        return entry.id;
+        return entry.id
     }
 
     async function update(id: string, summary: IMeetingSummary) {
-        await ensureAuthReady();
+        await ensureAuthReady()
 
         if (!isLoggedIn.value) {
-            const entries = readLocalHistory();
-            const idx = entries.findIndex((e) => e.id === id);
+            const entries = readLocalHistory()
+            const idx = entries.findIndex((e) => e.id === id)
 
             if (idx === -1) {
-                return;
+                return
             }
 
             entries[idx] = {
                 ...entries[idx]!,
                 summary,
                 meetingType: summary.meetingType,
-            };
-            writeLocalHistory(entries);
-            history.value = entries;
-            total.value = entries.length;
-            return;
+            }
+            writeLocalHistory(entries)
+            history.value = entries
+            total.value = entries.length
+            return
         }
 
         await $fetch(`/api/history/${id}`, {
             method: 'PATCH',
             body: { summary },
-        });
+        })
 
-        const idx = history.value.findIndex((e) => e.id === id);
+        const idx = history.value.findIndex((e) => e.id === id)
 
         if (idx !== -1) {
             history.value[idx] = {
                 ...history.value[idx],
                 summary,
                 meetingType: summary.meetingType,
-            } as IHistoryEntry;
+            } as IHistoryEntry
         }
     }
 
     async function remove(id: string) {
-        await ensureAuthReady();
+        await ensureAuthReady()
 
         if (!isLoggedIn.value) {
-            const entries = readLocalHistory().filter((e) => e.id !== id);
-            writeLocalHistory(entries);
-            history.value = entries;
-            total.value = entries.length;
-            return;
+            const entries = readLocalHistory().filter((e) => e.id !== id)
+            writeLocalHistory(entries)
+            history.value = entries
+            total.value = entries.length
+            return
         }
 
-        await $fetch(`/api/history/${id}`, { method: 'DELETE' });
-        history.value = history.value.filter((e) => e.id !== id);
-        total.value = Math.max(0, total.value - 1);
+        await $fetch(`/api/history/${id}`, { method: 'DELETE' })
+        history.value = history.value.filter((e) => e.id !== id)
+        total.value = Math.max(0, total.value - 1)
     }
 
     async function clear() {
-        await ensureAuthReady();
+        await ensureAuthReady()
 
         if (!isLoggedIn.value) {
-            writeLocalHistory([]);
-            history.value = [];
-            total.value = 0;
-            return;
+            writeLocalHistory([])
+            history.value = []
+            total.value = 0
+            return
         }
 
-        const ids = history.value.map((e) => e.id);
+        const ids = history.value.map((e) => e.id)
 
-        await Promise.all(ids.map((id) => $fetch(`/api/history/${id}`, { method: 'DELETE' })));
-        history.value = [];
-        total.value = 0;
+        await Promise.all(ids.map((id) => $fetch(`/api/history/${id}`, { method: 'DELETE' })))
+        history.value = []
+        total.value = 0
     }
 
     // ── One-time localStorage migration ───────────────────────────────────────
@@ -223,46 +223,46 @@ export function useHistory() {
     // Removes the localStorage key after a successful migration.
     async function migrateFromLocalStorage() {
         if (typeof localStorage === 'undefined') {
-            return;
+            return
         }
 
-        await ensureAuthReady();
+        await ensureAuthReady()
 
         if (!isLoggedIn.value) {
-            return;
+            return
         }
 
-        const raw = localStorage.getItem(LEGACY_KEY);
+        const raw = localStorage.getItem(LEGACY_KEY)
 
         if (!raw) {
-            return;
+            return
         }
 
         try {
-            const entries: IHistoryEntry[] = JSON.parse(raw);
+            const entries: IHistoryEntry[] = JSON.parse(raw)
 
             if (!entries.length) {
-                localStorage.removeItem(LEGACY_KEY);
+                localStorage.removeItem(LEGACY_KEY)
 
-                return;
+                return
             }
 
             await $fetch('/api/history/bulk', {
                 method: 'POST',
                 body: { entries },
-            });
+            })
 
-            localStorage.removeItem(LEGACY_KEY);
-            await load(1);
+            localStorage.removeItem(LEGACY_KEY)
+            await load(1)
 
             // eslint-disable-next-line no-console
-            console.info('[useHistory] Migrated', entries.length, 'entries from localStorage.');
+            console.info('[useHistory] Migrated', entries.length, 'entries from localStorage.')
         } catch (err) {
-            console.warn('[useHistory] localStorage migration failed:', err);
+            console.warn('[useHistory] localStorage migration failed:', err)
         }
     }
 
-    const hasMore = computed(() => history.value.length < total.value);
+    const hasMore = computed(() => history.value.length < total.value)
 
     return {
         history,
@@ -279,5 +279,5 @@ export function useHistory() {
         remove,
         clear,
         migrateFromLocalStorage,
-    };
+    }
 }

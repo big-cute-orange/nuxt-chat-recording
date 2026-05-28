@@ -2,39 +2,39 @@
  * POST /api/action-items
  * Create action item(s) from meeting summary
  */
-import { defineEventHandler, readBody, createError, type H3Event } from 'h3';
-import { useDb } from '#server/utils/db';
-import { actionItems, meetings, integrationsConfig } from '#server/db/schema';
-import { eq, and, isNull } from 'drizzle-orm';
-import { createJiraIssue } from '#server/utils/integrations/jira';
-import { createLinearIssue } from '#server/utils/integrations/linear';
-import { createNotionItem } from '#server/utils/integrations/notion';
-import { createAzureWorkItem } from '#server/utils/integrations/azure';
+import { defineEventHandler, readBody, createError, type H3Event } from 'h3'
+import { useDb } from '#server/utils/db'
+import { actionItems, meetings, integrationsConfig } from '#server/db/schema'
+import { eq, and, isNull } from 'drizzle-orm'
+import { createJiraIssue } from '#server/utils/integrations/jira'
+import { createLinearIssue } from '#server/utils/integrations/linear'
+import { createNotionItem } from '#server/utils/integrations/notion'
+import { createAzureWorkItem } from '#server/utils/integrations/azure'
 
 interface CreateActionItemRequest {
-    meetingId: string;
+    meetingId: string
     items: Array<{
-        title: string;
-        description?: string;
-        assignee?: string;
-        dueDate?: string;
-        priority?: 'LOW' | 'MEDIUM' | 'HIGH';
-    }>;
-    pushToService?: 'jira' | 'linear' | 'notion' | 'azure';
+        title: string
+        description?: string
+        assignee?: string
+        dueDate?: string
+        priority?: 'LOW' | 'MEDIUM' | 'HIGH'
+    }>
+    pushToService?: 'jira' | 'linear' | 'notion' | 'azure'
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-    const db = useDb();
-    const session = await getUserSession(event);
-    const userId = session?.user?.id || null;
+    const db = useDb()
+    const session = await getUserSession(event)
+    const userId = session?.user?.id || null
 
-    const body = await readBody<CreateActionItemRequest>(event);
+    const body = await readBody<CreateActionItemRequest>(event)
 
     if (!body.meetingId || !body.items?.length) {
         throw createError({
             statusCode: 400,
             message: 'meetingId and items array required',
-        });
+        })
     }
 
     // Validate meeting exists and belongs to user (if authenticated)
@@ -42,34 +42,34 @@ export default defineEventHandler(async (event: H3Event) => {
         .select()
         .from(meetings)
         .where(and(eq(meetings.id, body.meetingId), userId ? eq(meetings.userId, userId) : isNull(meetings.userId)))
-        .limit(1);
+        .limit(1)
 
     if (!meeting || meeting.length === 0) {
         throw createError({
             statusCode: 404,
             message: 'Meeting not found or access denied',
-        });
+        })
     }
 
-    const now = new Date().toISOString();
-    const createdItems = [];
+    const now = new Date().toISOString()
+    const createdItems = []
 
     for (const item of body.items) {
-        const id = crypto.randomUUID();
+        const id = crypto.randomUUID()
 
-        let externalServiceId = null;
-        let externalUrl = null;
+        let externalServiceId = null
+        let externalUrl = null
 
         // Push to external service if requested
         if (body.pushToService) {
             try {
-                const result = await pushActionItemToService(body.pushToService, item, user);
+                const result = await pushActionItemToService(body.pushToService, item, { id: userId })
 
-                externalServiceId = result.id;
-                externalUrl = result.url;
+                externalServiceId = result.id
+                externalUrl = result.url
             } catch (err) {
                 // Continue anyway — create local record
-                console.error(`Failed to push to ${body.pushToService}:`, err);
+                console.error(`Failed to push to ${body.pushToService}:`, err)
             }
         }
 
@@ -88,21 +88,21 @@ export default defineEventHandler(async (event: H3Event) => {
             externalUrl,
             createdAt: now,
             updatedAt: now,
-        });
+        })
 
         createdItems.push({
             id,
             ...item,
             externalServiceId,
             externalUrl,
-        });
+        })
     }
 
     return {
         count: createdItems.length,
         items: createdItems,
-    };
-});
+    }
+})
 
 /**
  * Push action item to external service (Jira, Linear, Notion, Azure DevOps)
@@ -118,16 +118,16 @@ async function pushActionItemToService(
     user: { id: string | null }
 ): Promise<{ id: string; url: string }> {
     if (service === 'jira') {
-        return createJiraActionItem(item, user);
+        return createJiraActionItem(item, user)
     } else if (service === 'linear') {
-        return createLinearActionItem(item, user);
+        return createLinearActionItem(item, user)
     } else if (service === 'notion') {
-        return createNotionActionItem(item, user);
+        return createNotionActionItem(item, user)
     } else if (service === 'azure') {
-        return createAzureActionItem(item, user);
+        return createAzureActionItem(item, user)
     }
 
-    throw new Error(`Unsupported service: ${service}`);
+    throw new Error(`Unsupported service: ${service}`)
 }
 
 /**
@@ -137,7 +137,7 @@ async function pushActionItemToService(
  * @returns {Promise<any>} Promise with the parsed integration configuration
  */
 async function getIntegrationConfig(userId: string | null, service: string) {
-    const db = useDb();
+    const db = useDb()
 
     const configs = await db
         .select()
@@ -145,13 +145,13 @@ async function getIntegrationConfig(userId: string | null, service: string) {
         .where(
             and(userId ? eq(integrationsConfig.userId, userId) : isNull(integrationsConfig.userId), eq(integrationsConfig.service, service))
         )
-        .limit(1);
+        .limit(1)
 
     if (!configs || configs.length === 0) {
-        throw new Error(`${service} not configured`);
+        throw new Error(`${service} not configured`)
     }
 
-    return JSON.parse(configs[0]!.config);
+    return JSON.parse(configs[0]!.config)
 }
 
 /**
@@ -162,9 +162,9 @@ async function getIntegrationConfig(userId: string | null, service: string) {
  * @returns {Promise<{ id: string; url: string }>} Promise with the external service ID and URL
  */
 async function createJiraActionItem(item: CreateActionItemRequest['items'][0], user: { id: string | null }) {
-    const config = await getIntegrationConfig(user.id, 'jira');
+    const config = await getIntegrationConfig(user.id, 'jira')
 
-    return createJiraIssue(config, item);
+    return createJiraIssue(config, item)
 }
 
 /**
@@ -175,9 +175,9 @@ async function createJiraActionItem(item: CreateActionItemRequest['items'][0], u
  * @returns {Promise<{ id: string; url: string }>} Promise with the external service ID and URL
  */
 async function createLinearActionItem(item: CreateActionItemRequest['items'][0], user: { id: string | null }) {
-    const config = await getIntegrationConfig(user.id, 'linear');
+    const config = await getIntegrationConfig(user.id, 'linear')
 
-    return createLinearIssue(config, item);
+    return createLinearIssue(config, item)
 }
 
 /**
@@ -188,9 +188,9 @@ async function createLinearActionItem(item: CreateActionItemRequest['items'][0],
  * @returns {Promise<{ id: string; url: string }>} Promise with the external service ID and URL
  */
 async function createNotionActionItem(item: CreateActionItemRequest['items'][0], user: { id: string | null }) {
-    const config = await getIntegrationConfig(user.id, 'notion');
+    const config = await getIntegrationConfig(user.id, 'notion')
 
-    return createNotionItem(config, item);
+    return createNotionItem(config, item)
 }
 
 /**
@@ -201,7 +201,7 @@ async function createNotionActionItem(item: CreateActionItemRequest['items'][0],
  * @returns {Promise<{ id: string; url: string }>} Promise with the external service ID and URL
  */
 async function createAzureActionItem(item: CreateActionItemRequest['items'][0], user: { id: string | null }) {
-    const config = await getIntegrationConfig(user.id, 'azure');
+    const config = await getIntegrationConfig(user.id, 'azure')
 
-    return createAzureWorkItem(config, item);
+    return createAzureWorkItem(config, item)
 }

@@ -1,4 +1,4 @@
-import { defineConfig } from 'drizzle-kit';
+import { defineConfig } from 'drizzle-kit'
 
 export default defineConfig({
     schema: './server/db/schema.ts',
@@ -8,4 +8,4 @@ export default defineConfig({
         url: process.env.TURSO_DB_URL || 'file:./data/minutai.db',
         authToken: process.env.TURSO_AUTH_TOKEN,
     },
-});
+})

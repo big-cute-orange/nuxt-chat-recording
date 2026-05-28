@@ -1,56 +1,15 @@
-import OpenAI from 'openai';
-import { defineEventHandler, readBody, setResponseHeaders, createError, type H3Event } from 'h3';
+import OpenAI from 'openai'
+import { defineEventHandler, readBody, setResponseHeaders, createError, type H3Event } from 'h3'
+import { version as promptVersion, transcriptPrompt, freeNotesPrompt } from '../prompts/index'
+import { MeetingSummarySchema } from '~~/shared/schemas/meeting'
+import { aiLogs } from '../db/schema'
 
-const JSON_SCHEMA = `
-Return this exact JSON structure — no markdown, no code blocks, just raw JSON:
-{
-  "summary": "2-4段会议执行摘要",
-  "actionItems": [
-    {
-      "task": "行动项的清晰描述",
-      "owner": "负责人姓名，若未指定则填'未分配'",
-      "deadline": "日期或时间范围，若未设置则填'无截止日期'",
-      "priority": "high|medium|low"
-    }
-  ],
-  "decisions": [
-    {
-      "decision": "决策事项",
-      "rationale": "决策原因（简述）",
-      "madeBy": "决策人，若为集体决策则填'集体决策'"
-    }
-  ],
-  "participants": ["姓名1", "姓名2"],
-  "meetingType": "如：迭代规划、客户评审、每日站会等",
-  "keyTopics": ["主题1", "主题2", "主题3"]
-}`;
-
-const TRANSCRIPT_PROMPT = `You are an expert meeting analyst. Analyze the provided meeting transcript and extract structured information.
-
-Detect the primary language of the input and write all text fields (summary, task descriptions, decisions, topics, etc.) in that same language.
-
-You MUST respond with valid JSON only.${JSON_SCHEMA}`;
-
-const FREE_NOTES_PROMPT = `You are an expert meeting assistant. The user has provided raw, unstructured notes taken during a meeting. These may be bullet points, fragments, abbreviations, shorthand, or stream-of-consciousness text — not a clean transcript.
-
-Detect the primary language of the input and write all text fields (summary, task descriptions, decisions, topics, etc.) in that same language.
-
-Your job is to interpret these notes intelligently and reconstruct the meeting structure:
-- Infer who was likely present from any names, roles, or initials mentioned
-- Identify tasks and who they likely belong to, even if not explicitly assigned
-- Detect decisions even if written as "→ do X" or "agreed: Y"
-- Infer priorities from urgency language ("ASAP", "urgent", "when we have time", "low prio", etc.)
-- Write the summary in polished, professional prose — not a reflection of the note style
-- If something is ambiguous, make a reasonable inference rather than leaving it empty
-
-You MUST respond with valid JSON only.${JSON_SCHEMA}`;
-
-type TProvider = 'deepseek' | 'qwen' | 'doubao';
+type TProvider = 'deepseek' | 'qwen' | 'doubao'
 
 interface IProviderConfig {
-    client: OpenAI;
-    model: string;
-    apiKeyName: string;
+    client: OpenAI
+    model: string
+    apiKeyName: string
 }
 
 function buildProviderConfig(provider: TProvider, config: Record<string, string>): IProviderConfig {
@@ -63,7 +22,7 @@ function buildProviderConfig(provider: TProvider, config: Record<string, string>
                 }),
                 model: 'deepseek-chat',
                 apiKeyName: 'DeepSeek API key',
-            };
+            }
         case 'qwen':
             return {
                 client: new OpenAI({
@@ -72,7 +31,7 @@ function buildProviderConfig(provider: TProvider, config: Record<string, string>
                 }),
                 model: 'qwen-plus',
                 apiKeyName: 'Qwen API key',
-            };
+            }
         case 'doubao':
             return {
                 client: new OpenAI({
@@ -83,48 +42,48 @@ function buildProviderConfig(provider: TProvider, config: Record<string, string>
                 // 豆包需要填写你在火山引擎创建的推理接入点 ID
                 model: config.dobaoModelId || '',
                 apiKeyName: 'Doubao API key',
-            };
+            }
     }
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-    const config = useRuntimeConfig();
-    const body = await readBody(event);
-    const { text, provider, inputType } = body;
-    const SYSTEM_PROMPT = inputType === 'free-notes' ? FREE_NOTES_PROMPT : TRANSCRIPT_PROMPT;
+    const config = useRuntimeConfig()
+    const body = await readBody(event)
+    const { text, provider, inputType } = body
+    const SYSTEM_PROMPT = inputType === 'free-notes' ? freeNotesPrompt : transcriptPrompt
 
     if (!text || text.trim().length < 10) {
-        throw createError({ statusCode: 400, message: 'Text is too short.' });
+        throw createError({ statusCode: 400, message: 'Text is too short.' })
     }
 
     if (!['deepseek', 'qwen', 'doubao'].includes(provider)) {
-        throw createError({ statusCode: 400, message: 'Invalid provider.' });
+        throw createError({ statusCode: 400, message: 'Invalid provider.' })
     }
 
-    const { client, model, apiKeyName } = buildProviderConfig(provider as TProvider, config as unknown as Record<string, string>);
+    const { client, model, apiKeyName } = buildProviderConfig(provider as TProvider, config as unknown as Record<string, string>)
 
     if (!client.apiKey) {
-        throw createError({ statusCode: 400, message: `${apiKeyName} is not configured.` });
+        throw createError({ statusCode: 400, message: `${apiKeyName} is not configured.` })
     }
 
     if (provider === 'doubao' && !model) {
-        throw createError({ statusCode: 400, message: 'Doubao model endpoint ID (DOUBAO_MODEL_ID) is not configured.' });
+        throw createError({ statusCode: 400, message: 'Doubao model endpoint ID (DOUBAO_MODEL_ID) is not configured.' })
     }
 
     setResponseHeaders(event, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
-    });
+    })
 
-    const stream = event.node.res;
+    const stream = event.node.res
     const userMessage =
         inputType === 'free-notes'
             ? `Please structure these raw meeting notes:\n\n${text}`
-            : `Please analyze this meeting transcript:\n\n${text}`;
+            : `Please analyze this meeting transcript:\n\n${text}`
 
     try {
-        let fullText = '';
+        let fullText = ''
 
         const response = await client.chat.completions.create({
             model,
@@ -134,25 +93,58 @@ export default defineEventHandler(async (event: H3Event) => {
                 { role: 'user', content: userMessage },
             ],
             stream: true,
-        });
+        })
 
         for await (const chunk of response) {
-            const delta = chunk.choices[0]?.delta?.content || '';
+            const delta = chunk.choices[0]?.delta?.content || ''
 
             if (delta) {
-                fullText += delta;
-                stream.write(`data: ${JSON.stringify({ chunk: delta })}\n\n`);
+                fullText += delta
+                stream.write(`data: ${JSON.stringify({ chunk: delta })}\n\n`)
             }
         }
 
         // 在所有 chunk 接收完后统一发送 done，不依赖 finish_reason 的具体值
         // 避免不同 provider 返回不同 finish_reason 导致前端永远等待
-        stream.write(`data: ${JSON.stringify({ done: true, full: fullText })}\n\n`);
-    } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+        stream.write(`data: ${JSON.stringify({ done: true, full: fullText })}\n\n`)
 
-        stream.write(`data: ${JSON.stringify({ error: errorMessage })}\n\n`);
+        // 异步写日志，不阻塞响应
+        const cleaned = fullText
+            .replace(/```json\n?/g, '')
+            .replace(/```\n?/g, '')
+            .trim()
+        try {
+            let validationPassed = false
+            let validationErrors: string | null = null
+
+            try {
+                const parsed = MeetingSummarySchema.safeParse(JSON.parse(cleaned))
+
+                validationPassed = parsed.success
+                validationErrors = parsed.success ? null : JSON.stringify(parsed.error.flatten())
+            } catch {
+                validationErrors = JSON.stringify({ message: 'Invalid JSON returned by AI' })
+            }
+
+            await useDb()
+                .insert(aiLogs)
+                .values({
+                    id: crypto.randomUUID(),
+                    provider,
+                    promptVersion,
+                    rawOutput: fullText,
+                    validationPassed,
+                    validationErrors,
+                    createdAt: new Date().toISOString(),
+                })
+        } catch {
+            /* 日志写失败不影响主流程 */
+        }
+    } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.'
+
+        stream.write(`data: ${JSON.stringify({ error: errorMessage })}\n\n`)
     } finally {
-        stream.end();
+        stream.end()
     }
-});
+})

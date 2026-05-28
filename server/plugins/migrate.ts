@@ -1,5 +1,5 @@
-import { migrate } from 'drizzle-orm/libsql/migrator';
-import { useDb } from '#server/utils/db';
+import { migrate } from 'drizzle-orm/libsql/migrator'
+import { useDb } from '#server/utils/db'
 
 // ── Auto-migrate on server startup ────────────────────────────────────────────
 // Runs pending migrations from server/db/migrations/ each time Nitro starts.
@@ -9,19 +9,19 @@ import { useDb } from '#server/utils/db';
 
 export default defineNitroPlugin(async () => {
     if (process.env.NODE_ENV === 'production') {
-        return;
+        return
     }
 
     try {
-        const db = useDb();
+        const db = useDb()
 
-        await migrate(db, { migrationsFolder: './server/db/migrations' });
+        await migrate(db, { migrationsFolder: './server/db/migrations' })
 
         // eslint-disable-next-line no-console
-        console.info('[db] Migrations applied successfully.');
+        console.info('[db] Migrations applied successfully.')
     } catch (err) {
-        console.error('[db] Migration failed:', err);
+        console.error('[db] Migration failed:', err)
 
-        throw err;
+        throw err
     }
-});
+})

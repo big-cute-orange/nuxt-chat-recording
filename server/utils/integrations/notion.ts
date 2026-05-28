@@ -3,32 +3,32 @@
  * Creates database entries in Notion from action items
  */
 
-import type { INotionConfig } from '~/types';
+import type { INotionConfig } from '~/types'
 
 export interface INotionCreateResult {
-    id: string;
-    url: string;
+    id: string
+    url: string
 }
 
 interface INotionProperties {
     title: {
-        title: Array<{ text: { content: string } }>;
-    };
+        title: Array<{ text: { content: string } }>
+    }
     description?: {
-        rich_text: Array<{ text: { content: string } }>;
-    };
+        rich_text: Array<{ text: { content: string } }>
+    }
     priority?: {
-        select: { name: string };
-    };
+        select: { name: string }
+    }
     'due-date'?: {
-        date: { start: string };
-    };
+        date: { start: string }
+    }
     assignee?: {
-        rich_text: Array<{ text: { content: string } }>;
-    };
+        rich_text: Array<{ text: { content: string } }>
+    }
     status: {
-        select: { name: string };
-    };
+        select: { name: string }
+    }
 }
 
 /**
@@ -45,15 +45,15 @@ interface INotionProperties {
 export async function createNotionItem(
     config: INotionConfig,
     item: {
-        title: string;
-        description?: string;
-        assignee?: string;
-        dueDate?: string;
-        priority?: string;
+        title: string
+        description?: string
+        assignee?: string
+        dueDate?: string
+        priority?: string
     }
 ): Promise<INotionCreateResult> {
     if (!config.enabled || !config.integrationToken || !config.databaseId) {
-        throw new Error('Notion is not properly configured');
+        throw new Error('Notion is not properly configured')
     }
 
     // Map application priority to Notion select option
@@ -61,14 +61,14 @@ export async function createNotionItem(
         HIGH: 'High',
         MEDIUM: 'Medium',
         LOW: 'Low',
-    };
+    }
 
     // Map application status to Notion select option
     const statusMap: Record<string, string> = {
         TODO: 'To Do',
         IN_PROGRESS: 'In Progress',
         DONE: 'Done',
-    };
+    }
 
     const properties: INotionProperties = {
         title: {
@@ -77,37 +77,37 @@ export async function createNotionItem(
         status: {
             select: { name: statusMap.TODO || 'To Do' },
         },
-    };
+    }
 
     // Add optional fields if they exist and the database has them
     if (item.description) {
         properties.description = {
             rich_text: [{ text: { content: item.description } }],
-        };
+        }
     }
 
     if (item.priority) {
         properties.priority = {
             select: { name: priorityMap[item.priority] || item.priority },
-        };
+        }
     }
 
     if (item.dueDate) {
         properties['due-date'] = {
             date: { start: item.dueDate },
-        };
+        }
     }
 
     if (item.assignee) {
         properties.assignee = {
             rich_text: [{ text: { content: item.assignee } }],
-        };
+        }
     }
 
     const response = await fetch('https://api.notion.com/v1/pages', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${config.integrationToken}`,
+            Authorization: `Bearer ${config.integrationToken}`,
             'Content-Type': 'application/json',
             'Notion-Version': '2022-06-28',
         },
@@ -115,22 +115,20 @@ export async function createNotionItem(
             parent: { database_id: config.databaseId.replace(/-/g, '') },
             properties,
         }),
-    });
+    })
 
     if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json()
 
-        throw new Error(
-            `Notion API error: ${error.message || response.statusText}`
-        );
+        throw new Error(`Notion API error: ${error.message || response.statusText}`)
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
     return {
         id: data.id,
         url: data.url,
-    };
+    }
 }
 
 /**
@@ -140,33 +138,29 @@ export async function createNotionItem(
  * @param {string} status - The new status to set (TODO, IN_PROGRESS, DONE)
  * @returns {Promise<void>} Promise that resolves when the update is complete
  */
-export async function updateNotionItemStatus(
-    config: INotionConfig,
-    pageId: string,
-    status: string
-): Promise<void> {
+export async function updateNotionItemStatus(config: INotionConfig, pageId: string, status: string): Promise<void> {
     if (!config.enabled || !config.integrationToken) {
-        throw new Error('Notion is not properly configured');
+        throw new Error('Notion is not properly configured')
     }
 
     const statusMap: Record<string, string> = {
         TODO: 'To Do',
         IN_PROGRESS: 'In Progress',
         DONE: 'Done',
-    };
+    }
 
-    const targetStatus = statusMap[status];
+    const targetStatus = statusMap[status]
 
     if (!targetStatus) {
-        console.warn(`Unknown status: ${status}, skipping Notion update`);
+        console.warn(`Unknown status: ${status}, skipping Notion update`)
 
-        return;
+        return
     }
 
     const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
         method: 'PATCH',
         headers: {
-            'Authorization': `Bearer ${config.integrationToken}`,
+            Authorization: `Bearer ${config.integrationToken}`,
             'Content-Type': 'application/json',
             'Notion-Version': '2022-06-28',
         },
@@ -177,13 +171,11 @@ export async function updateNotionItemStatus(
                 },
             },
         }),
-    });
+    })
 
     if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json()
 
-        console.warn(
-            `Failed to update Notion item status: ${error.message || response.statusText}`
-        );
+        console.warn(`Failed to update Notion item status: ${error.message || response.statusText}`)
     }
 }

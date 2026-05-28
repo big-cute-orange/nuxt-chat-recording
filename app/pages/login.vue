@@ -1,60 +1,62 @@
 <script setup lang="ts">
-definePageMeta({ layout: false });
+definePageMeta({ layout: false })
 
-const { login, register, isLoading } = useAuth();
+const { login, register, isLoading } = useAuth()
 
 // ── Tab ───────────────────────────────────────────────────────────────────────
-const tab = ref<'login' | 'register'>('login');
+const tab = ref<'login' | 'register'>('login')
 
 function switchTab(t: 'login' | 'register') {
-    tab.value = t;
-    formError.value = '';
-    Object.assign(fields, { username: '', password: '', confirm: '' });
-    Object.assign(touched, { username: false, password: false, confirm: false });
+    tab.value = t
+    formError.value = ''
+    Object.assign(fields, { username: '', password: '', confirm: '' })
+    Object.assign(touched, { username: false, password: false, confirm: false })
 }
 
 // ── Form state ────────────────────────────────────────────────────────────────
-const fields = reactive({ username: '', password: '', confirm: '' });
-const touched = reactive({ username: false, password: false, confirm: false });
-const formError = ref('');
-const showPassword = ref(false);
-const showConfirm = ref(false);
+const fields = reactive({ username: '', password: '', confirm: '' })
+const touched = reactive({ username: false, password: false, confirm: false })
+const formError = ref('')
+const showPassword = ref(false)
+const showConfirm = ref(false)
 
 // ── Validation ────────────────────────────────────────────────────────────────
-const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
+const USERNAME_RE = /^\w{3,20}$/
 
 const errors = computed(() => ({
     username: touched.username && !USERNAME_RE.test(fields.username) ? '3-20 位字母、数字或下划线' : '',
     password: touched.password && fields.password.length < 8 ? '至少 8 位' : '',
     confirm: tab.value === 'register' && touched.confirm && fields.confirm !== fields.password ? '两次密码不一致' : '',
-}));
+}))
 
 const isValid = computed(() => {
-    const base = USERNAME_RE.test(fields.username) && fields.password.length >= 8;
-    if (tab.value === 'register') return base && fields.confirm === fields.password;
-    return base;
-});
+    const base = USERNAME_RE.test(fields.username) && fields.password.length >= 8
+
+    if (tab.value === 'register') return base && fields.confirm === fields.password
+
+    return base
+})
 
 // ── Submit ────────────────────────────────────────────────────────────────────
 async function handleSubmit() {
     // Mark all as touched to show any remaining errors
-    touched.username = true;
-    touched.password = true;
-    if (tab.value === 'register') touched.confirm = true;
+    touched.username = true
+    touched.password = true
+    if (tab.value === 'register') touched.confirm = true
 
-    if (!isValid.value) return;
+    if (!isValid.value) return
 
-    formError.value = '';
+    formError.value = ''
 
     try {
         if (tab.value === 'login') {
-            await login(fields.username, fields.password);
+            await login(fields.username, fields.password)
         } else {
-            await register(fields.username, fields.password, fields.confirm);
+            await register(fields.username, fields.password, fields.confirm)
         }
     } catch (err: unknown) {
         formError.value =
-            (err as { data?: { message?: string } })?.data?.message || (tab.value === 'login' ? '用户名或密码错误' : '注册失败，请重试');
+            (err as { data?: { message?: string } })?.data?.message || (tab.value === 'login' ? '用户名或密码错误' : '注册失败，请重试')
     }
 }
 </script>

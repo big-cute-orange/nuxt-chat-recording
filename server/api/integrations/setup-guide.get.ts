@@ -2,7 +2,7 @@
  * Integration setup guide and documentation endpoint
  * GET /api/integrations/setup-guide
  */
-import { defineEventHandler } from 'h3';
+import { defineEventHandler } from 'h3'
 
 export default defineEventHandler(() => {
     return {
@@ -100,5 +100,5 @@ export default defineEventHandler(() => {
             step_4: 'Create action items via POST /api/action-items with pushToService parameter',
             step_5: 'Update status via PATCH /api/action-items/[id] - status changes sync automatically',
         },
-    };
-});
+    }
+})
