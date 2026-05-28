@@ -1,4 +1,5 @@
 import type { TProvider, TInputType, IMeetingSummary } from '~/types';
+import { MeetingSummarySchema } from '~~/shared/schemas/meeting';
 
 export function useSummarizer() {
     const result = ref<IMeetingSummary | null>(null);
@@ -69,7 +70,13 @@ export function useSummarizer() {
                                 .replace(/```\n?/g, '')
                                 .trim();
 
-                            result.value = JSON.parse(cleaned) as IMeetingSummary;
+                            // result.value = JSON.parse(cleaned) as IMeetingSummary;
+                            const parsed = MeetingSummarySchema.safeParse(JSON.parse(cleaned));
+                            if (parsed.success) {
+                                result.value = parsed.data;
+                            } else {
+                                throw new Error('AI returned unexpected response structure.');
+                            }
                         }
                     } catch (parseErr: unknown) {
                         // Ignore partial JSON chunks mid-stream

@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { defineEventHandler, readBody, createError, type H3Event } from 'h3';
+import { MeetingSummarySchema } from '~~/shared/schemas/meeting';
 
 const SYSTEM_PROMPT = `You are an expert meeting analyst. Analyze the provided meeting transcript and extract structured information.
 
@@ -72,13 +73,25 @@ async function callProvider(provider: TProvider, text: string, config: Record<st
     return response.choices[0]?.message.content ?? '';
 }
 
+// function parseResult(raw: string) {
+//     const cleaned = raw
+//         .replace(/```json\n?/g, '')
+//         .replace(/```\n?/g, '')
+//         .trim();
+
+//     return JSON.parse(cleaned);
+// }
 function parseResult(raw: string) {
     const cleaned = raw
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim();
-
-    return JSON.parse(cleaned);
+    const result = MeetingSummarySchema.safeParse(JSON.parse(cleaned));
+    if (!result.success) {
+        console.warn('[AI] Schema validation failed:', result.error.flatten());
+        return null;
+    }
+    return result.data;
 }
 
 export default defineEventHandler(async (event: H3Event) => {
