@@ -21,7 +21,7 @@ const showPassword = ref(false)
 const showConfirm = ref(false)
 
 // ── Validation ────────────────────────────────────────────────────────────────
-const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/
+const USERNAME_RE = /^\w{3,20}$/
 
 const errors = computed(() => ({
     username: touched.username && !USERNAME_RE.test(fields.username) ? '3-20 位字母、数字或下划线' : '',
@@ -31,7 +31,9 @@ const errors = computed(() => ({
 
 const isValid = computed(() => {
     const base = USERNAME_RE.test(fields.username) && fields.password.length >= 8
+
     if (tab.value === 'register') return base && fields.confirm === fields.password
+
     return base
 })
 

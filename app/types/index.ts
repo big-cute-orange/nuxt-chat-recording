@@ -1,6 +1,6 @@
 // ── AI / Summary types ────────────────────────────────────────────────────────
 
-// export type TProvider = 'anthropic' | 'openai' | 'gemini';
+// export type TProvider = 'deepseek' | 'qwen' | 'doubao';
 export type TProvider = 'deepseek' | 'qwen' | 'doubao'
 export type TInputType = 'transcript' | 'free-notes'
 export type TPriority = 'high' | 'medium' | 'low'

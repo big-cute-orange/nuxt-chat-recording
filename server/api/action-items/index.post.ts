@@ -63,7 +63,7 @@ export default defineEventHandler(async (event: H3Event) => {
         // Push to external service if requested
         if (body.pushToService) {
             try {
-                const result = await pushActionItemToService(body.pushToService, item, user)
+                const result = await pushActionItemToService(body.pushToService, item, { id: userId })
 
                 externalServiceId = result.id
                 externalUrl = result.url

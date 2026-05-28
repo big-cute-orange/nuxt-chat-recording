@@ -114,7 +114,18 @@ export default defineEventHandler(async (event: H3Event) => {
             .replace(/```\n?/g, '')
             .trim()
         try {
-            const parsed = MeetingSummarySchema.safeParse(JSON.parse(cleaned))
+            let validationPassed = false
+            let validationErrors: string | null = null
+
+            try {
+                const parsed = MeetingSummarySchema.safeParse(JSON.parse(cleaned))
+
+                validationPassed = parsed.success
+                validationErrors = parsed.success ? null : JSON.stringify(parsed.error.flatten())
+            } catch {
+                validationErrors = JSON.stringify({ message: 'Invalid JSON returned by AI' })
+            }
+
             await useDb()
                 .insert(aiLogs)
                 .values({
@@ -122,8 +133,8 @@ export default defineEventHandler(async (event: H3Event) => {
                     provider,
                     promptVersion,
                     rawOutput: fullText,
-                    validationPassed: parsed.success,
-                    validationErrors: parsed.success ? null : JSON.stringify(parsed.error.flatten()),
+                    validationPassed,
+                    validationErrors,
                     createdAt: new Date().toISOString(),
                 })
         } catch {

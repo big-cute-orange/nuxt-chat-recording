@@ -48,14 +48,6 @@ async function callProvider(provider: TProvider, text: string, config: Record<st
     return response.choices[0]?.message.content ?? ''
 }
 
-// function parseResult(raw: string) {
-//     const cleaned = raw
-//         .replace(/```json\n?/g, '')
-//         .replace(/```\n?/g, '')
-//         .trim();
-
-//     return JSON.parse(cleaned);
-// }
 function parseResult(raw: string) {
     const cleaned = raw
         .replace(/```json\n?/g, '')
@@ -64,9 +56,9 @@ function parseResult(raw: string) {
     const result = MeetingSummarySchema.safeParse(JSON.parse(cleaned))
     if (!result.success) {
         console.warn('[AI] Schema validation failed:', result.error.flatten())
-        return null
+        return { data: null, parsed: result }
     }
-    return result.data
+    return { data: result.data, parsed: result }
 }
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -93,12 +85,7 @@ export default defineEventHandler(async (event: H3Event) => {
         }
 
         try {
-            const result = parseResult(settled.value)
-            const cleaned = settled.value
-                .replace(/```json\n?/g, '')
-                .replace(/```\n?/g, '')
-                .trim()
-            const parsed = MeetingSummarySchema.safeParse(JSON.parse(cleaned))
+            const { data, parsed } = parseResult(settled.value)
             await useDb()
                 .insert(aiLogs)
                 .values({
@@ -113,7 +100,7 @@ export default defineEventHandler(async (event: H3Event) => {
                 .catch(() => {
                     /* 日志写失败不影响主流程 */
                 })
-            return result
+            return data
         } catch {
             return { error: 'Failed to parse response as JSON.' }
         }

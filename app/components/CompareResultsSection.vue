@@ -30,31 +30,37 @@ function getCompareResult(side: 'a' | 'b') {
 
 function getCompareDecisions(side: 'a' | 'b') {
     const result = getCompareResult(side)
+
     return result && !isError(result) ? (result.decisions ?? []) : []
 }
 
 function getCompareMeetingType(side: 'a' | 'b'): string {
     const result = getCompareResult(side)
+
     return result && !isError(result) ? result.meetingType : ''
 }
 
 function getCompareKeyTopics(side: 'a' | 'b'): string[] {
     const result = getCompareResult(side)
+
     return result && !isError(result) ? (result.keyTopics ?? []) : []
 }
 
 function getCompareSummary(side: 'a' | 'b'): string {
     const result = getCompareResult(side)
+
     return result && !isError(result) ? result.summary : ''
 }
 
 function getCompareActionItems(side: 'a' | 'b') {
     const result = getCompareResult(side)
+
     return result && !isError(result) ? (result.actionItems ?? []) : []
 }
 
 function getCompareResultAsAny(side: 'a' | 'b'): IMeetingSummary | undefined {
     const result = getCompareResult(side)
+
     return result && !isError(result) ? result : undefined
 }
 
@@ -110,6 +116,7 @@ async function copyToClipboard(text: string, key: string) {
         await navigator.clipboard.writeText(text)
     } catch {
         const el = document.createElement('textarea')
+
         el.value = text
         document.body.appendChild(el)
         el.select()

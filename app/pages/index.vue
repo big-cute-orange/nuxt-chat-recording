@@ -188,6 +188,7 @@ async function handleFile(file: File) {
     } else {
         fileName.value = ''
         alert('不支持的文件格式，请上传 .txt / .docx / .vtt / .srt')
+
         return
     }
 
@@ -316,7 +317,7 @@ const priorityConfig = {
     low: { label: 'Low', color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
 }
 
-const providers = [
+const providers: { id: TProvider; label: string }[] = [
     { id: 'deepseek', label: 'DeepSeek' },
     { id: 'qwen', label: '通义千问' },
     { id: 'doubao', label: '豆包' },
@@ -333,9 +334,11 @@ function toggleCompareProvider(id: TProvider) {
 
     if (a === id) {
         const third = providers.find((p) => p.id !== a && p.id !== b)!
+
         compareProviders.value = [third.id as TProvider, b]
     } else if (b === id) {
         const third = providers.find((p) => p.id !== a && p.id !== b)!
+
         compareProviders.value = [a, third.id as TProvider]
     } else {
         compareProviders.value = [a, id]
