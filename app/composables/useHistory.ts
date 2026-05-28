@@ -1,4 +1,4 @@
-import type { IHistoryEntry, IHistoryPage, IMeetingSummary } from '~/types'
+import type { IHistoryEntry, IHistoryPage, IMeetingSummary, ICompareResponse } from '~/types'
 
 const LEGACY_KEY = 'minutai:history'
 const LOCAL_LIMIT = 100
@@ -109,18 +109,23 @@ export function useHistory() {
 
     // ── Mutations ─────────────────────────────────────────────────────────────
     async function add(
-        summary: IMeetingSummary,
+        summary: IMeetingSummary | ICompareResponse,
         transcript: string,
         provider: IHistoryEntry['provider'],
         mode: 'single' | 'compare' = 'single'
     ): Promise<string> {
         await ensureAuthReady()
 
+        const meetingType =
+            mode === 'compare'
+                ? (('a' in summary && !('error' in summary.a.result) ? (summary.a.result as IMeetingSummary).meetingType : null) ?? '对比分析')
+                : (summary as IMeetingSummary).meetingType
+
         if (!isLoggedIn.value) {
             const entry: IHistoryEntry = {
                 id: crypto.randomUUID(),
                 date: new Date().toISOString(),
-                meetingType: summary.meetingType,
+                meetingType,
                 provider,
                 charCount: transcript.length,
                 transcript,

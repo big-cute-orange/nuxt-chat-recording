@@ -25,11 +25,18 @@ export default defineEventHandler(async (event: H3Event) => {
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
 
+    // For compare mode, derive meetingType from result A if available
+    let meetingType = summary.meetingType ?? 'Meeting'
+    if (mode === 'compare') {
+        const resultA = summary?.a?.result
+        meetingType = (resultA && !('error' in resultA) ? resultA.meetingType : null) ?? '对比分析'
+    }
+
     const entry = {
         id,
         userId,
         date: date ?? now,
-        meetingType: summary.meetingType ?? 'Meeting',
+        meetingType: meetingType,
         provider: provider as string,
         mode: (mode ?? 'single') as string,
         charCount: typeof transcript === 'string' ? transcript.length : 0,

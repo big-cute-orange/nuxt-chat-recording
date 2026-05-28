@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import type { TProvider, IMeetingSummary, TInputType, IHistoryEntry } from '~/types/index'
+import type { TProvider, IMeetingSummary, ICompareResponse, TInputType, IHistoryEntry } from '~/types/index'
 
 const { summarize, result, loading, error, progress, reset } = useSummarizer()
-const { compare, results: compareResults, loading: compareLoading, error: compareError, reset: compareReset } = useCompare()
+const {
+    compare,
+    results: compareResults,
+    loading: compareLoading,
+    error: compareError,
+    judgeResult,
+    judgeLoading,
+    reset: compareReset,
+} = useCompare()
 const {
     transcribe,
     result: transcribeResult,
@@ -73,12 +81,25 @@ async function onDeleteHistoryEntry(id: string) {
 function openHistoryEntry(entry: IHistoryEntry) {
     activeHistoryId.value = entry.id
     submittedText.value = entry.transcript
-    provider.value = entry.provider
-    mode.value = 'single'
-    reset()
-    nextTick(() => {
-        result.value = entry.summary
-    })
+
+    if (entry.mode === 'compare') {
+        const data = entry.summary as ICompareResponse
+
+        compareProviders.value = [data.a.provider, data.b.provider]
+        mode.value = 'compare'
+        reset()
+        compareReset()
+        nextTick(() => {
+            compareResults.value = data
+        })
+    } else {
+        provider.value = entry.provider
+        mode.value = 'single'
+        reset()
+        nextTick(() => {
+            result.value = entry.summary as IMeetingSummary
+        })
+    }
 }
 
 onMounted(async () => {
@@ -276,6 +297,10 @@ async function handleSubmit() {
         }
     } else {
         await compare(transcriptText.value, compareProviders.value)
+
+        if (compareResults.value) {
+            activeHistoryId.value = await historyAdd(compareResults.value, submittedText.value, compareProviders.value[0], 'compare')
+        }
     }
 }
 
@@ -425,28 +450,32 @@ function toggleCompareProvider(id: TProvider) {
             <Transition name="slide-up">
                 <section v-if="!hasResult" class="input-section">
                     <div class="hero">
-                        <h1 class="hero-title">
-                            <template v-if="mode === 'single'">
-                                让会议成果
-                                <br />
-                                <em>快速落地</em>
-                            </template>
-                            <template v-else>
-                                AI 会议分析
-                                <br />
-                                <em>对比</em>
-                            </template>
-                        </h1>
-                        <p class="hero-sub">
-                            <template v-if="mode === 'single'">粘贴会议纪要原文或上传文件，AI 自动提取所有关键信息</template>
-                            <template v-else>
-                                上传会议记录，对比
-                                <strong>{{ providerName(compareProviders[0]) }}</strong>
-                                和
-                                <strong>{{ providerName(compareProviders[1]) }}</strong>
-                                的分析结果
-                            </template>
-                        </p>
+                        <Transition name="hero-fade" mode="out-in">
+                            <div :key="mode" class="hero-content">
+                                <h1 class="hero-title">
+                                    <template v-if="mode === 'single'">
+                                        让会议成果
+                                        <br />
+                                        <em>快速落地</em>
+                                    </template>
+                                    <template v-else>
+                                        AI 会议分析
+                                        <br />
+                                        <em>对比</em>
+                                    </template>
+                                </h1>
+                                <p class="hero-sub">
+                                    <template v-if="mode === 'single'">粘贴会议纪要原文或上传文件，AI 自动提取所有关键信息</template>
+                                    <template v-else>
+                                        上传会议记录，对比
+                                        <strong>{{ providerName(compareProviders[0]) }}</strong>
+                                        和
+                                        <strong>{{ providerName(compareProviders[1]) }}</strong>
+                                        的分析结果
+                                    </template>
+                                </p>
+                            </div>
+                        </Transition>
                     </div>
 
                     <div class="input-tabs">
@@ -614,6 +643,8 @@ function toggleCompareProvider(id: TProvider) {
                 :submitted-text="submittedText"
                 :provider-name="providerName"
                 :priority-config="priorityConfig"
+                :judge-result="judgeResult"
+                :judge-loading="judgeLoading"
                 @reset="handleReset"
             />
         </main>
@@ -1172,6 +1203,19 @@ function toggleCompareProvider(id: TProvider) {
 }
 
 /* ── Transitions ─────────────────────────────────────────────── */
+.hero-fade-enter-active,
+.hero-fade-leave-active {
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
+}
+
+.hero-fade-enter-from,
+.hero-fade-leave-to {
+    opacity: 0;
+    transform: translateY(6px);
+}
+
 .slide-up-enter-active,
 .slide-up-leave-active {
     transition: all 0.4s ease;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { isCompareError } from '~/composables/useCompare'
-import type { ICompareResponse } from '~/composables/useCompare'
+import type { ICompareResponse, IJudgeResponse } from '~/composables/useCompare'
 import type { IMeetingSummary, TPriority, TProvider } from '~/types'
 
 const props = defineProps<{
@@ -8,6 +8,8 @@ const props = defineProps<{
     submittedText: string
     providerName: (provider: TProvider) => string
     priorityConfig: Record<TPriority, { label: string; color: string; bg: string }>
+    judgeResult: IJudgeResponse | null
+    judgeLoading: boolean
 }>()
 
 const emit = defineEmits<{
@@ -19,6 +21,34 @@ const transcriptExpanded = ref(false)
 const copiedKey = ref<string | null>(null)
 
 const isError = isCompareError
+
+const DIMENSIONS = [
+    { key: 'completeness', label: '完整性' },
+    { key: 'accuracy', label: '准确性' },
+    { key: 'actionability', label: '可执行性' },
+    { key: 'conciseness', label: '简洁性' },
+] as const
+
+function judgeProviderName(provider: string): string {
+    return props.providerName(provider as TProvider)
+}
+
+function winnerLabel(): string {
+    if (!props.judgeResult) return ''
+    const { winner } = props.judgeResult
+
+    if (winner === 'tie') return '平局'
+
+    const side = winner === 'model_a' ? props.compareResults.a : props.compareResults.b
+
+    return props.providerName(side.provider)
+}
+
+function scoreColor(scoreA: number, scoreB: number, isA: boolean): string {
+    if (Math.abs(scoreA - scoreB) < 0.5) return 'neutral'
+
+    return (isA ? scoreA > scoreB : scoreB > scoreA) ? 'win' : 'lose'
+}
 
 function valuesDiffer(a: unknown, b: unknown): boolean {
     return JSON.stringify(a) !== JSON.stringify(b)
@@ -149,6 +179,109 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
                     <span class="meeting-type-badge">对比模式</span>
                 </div>
                 <button type="button" class="reset-btn" @click="emit('reset')">← 新建会议</button>
+            </div>
+
+            <!-- ── Judge panel ──────────────────────────────────────────── -->
+            <div v-if="judgeLoading || judgeResult" class="judge-panel">
+                <!-- Skeleton -->
+                <template v-if="judgeLoading">
+                    <div class="judge-skeleton">
+                        <div class="skeleton-title">
+                            <span class="skeleton-title-icon">⚖</span>
+                            <span>AI 裁判正在评估两个模型的输出质量...</span>
+                        </div>
+                        <div class="skeleton-header">
+                            <div class="skeleton-bar w-24" />
+                            <div class="skeleton-bar w-32" />
+                        </div>
+                        <div class="skeleton-rows">
+                            <div v-for="i in 4" :key="i" class="skeleton-row">
+                                <div class="skeleton-bar w-20" />
+                                <div class="skeleton-bar w-full" />
+                                <div class="skeleton-bar w-full" />
+                            </div>
+                        </div>
+                        <div class="skeleton-bar w-48 skeleton-reason" />
+                    </div>
+                </template>
+
+                <!-- Scores -->
+                <template v-else-if="judgeResult">
+                    <div class="judge-header">
+                        <div class="judge-meta">
+                            <span class="judge-label">裁判</span>
+                            <span class="judge-provider-name">{{ judgeProviderName(judgeResult.judgeProvider) }}</span>
+                        </div>
+                        <div class="judge-winner">
+                            <span class="winner-label">胜出</span>
+                            <span :class="['winner-name', judgeResult.winner === 'tie' ? 'tie' : 'win']">
+                                {{ winnerLabel() }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="judge-scores">
+                        <div class="judge-score-col judge-score-labels">
+                            <div class="judge-score-header-cell" />
+                            <div v-for="dim in DIMENSIONS" :key="dim.key" class="judge-score-cell judge-dim-label">
+                                {{ dim.label }}
+                            </div>
+                            <div class="judge-score-cell judge-overall-label">综合</div>
+                        </div>
+
+                        <div v-for="(side, idx) in ['a', 'b'] as const" :key="side" class="judge-score-col">
+                            <div class="judge-score-header-cell judge-provider-header">
+                                <span :class="['judge-side-badge', side]">{{ side.toUpperCase() }}</span>
+                                <span class="judge-provider-label">{{ providerName(compareResults[side].provider) }}</span>
+                            </div>
+                            <div
+                                v-for="dim in DIMENSIONS"
+                                :key="dim.key"
+                                :class="[
+                                    'judge-score-cell',
+                                    'judge-score-value',
+                                    scoreColor(judgeResult.scores.model_a[dim.key], judgeResult.scores.model_b[dim.key], idx === 0),
+                                ]"
+                            >
+                                <span class="score-number">
+                                    {{ (idx === 0 ? judgeResult.scores.model_a : judgeResult.scores.model_b)[dim.key] }}
+                                </span>
+                                <div class="score-bar-track">
+                                    <div
+                                        class="score-bar-fill"
+                                        :style="{
+                                            width:
+                                                ((idx === 0 ? judgeResult.scores.model_a : judgeResult.scores.model_b)[dim.key] / 10) *
+                                                    100 +
+                                                '%',
+                                        }"
+                                    />
+                                </div>
+                            </div>
+                            <div
+                                :class="[
+                                    'judge-score-cell',
+                                    'judge-overall-value',
+                                    judgeResult.winner === 'tie'
+                                        ? 'neutral'
+                                        : (idx === 0 ? judgeResult.winner === 'model_a' : judgeResult.winner === 'model_b')
+                                          ? 'win'
+                                          : 'lose',
+                                ]"
+                            >
+                                {{ (idx === 0 ? judgeResult.scores.model_a : judgeResult.scores.model_b).overall }}
+                                <span
+                                    v-if="idx === 0 ? judgeResult.winner === 'model_a' : judgeResult.winner === 'model_b'"
+                                    class="winner-check"
+                                >
+                                    ✓
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="judge-reason">{{ judgeResult.reason }}</p>
+                </template>
             </div>
 
             <div class="compare-grid">
@@ -710,5 +843,273 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
 .fade-up-enter-from {
     opacity: 0;
     transform: translateY(16px);
+}
+
+/* ── Judge panel ─────────────────────────────────────────────── */
+.judge-panel {
+    margin-top: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    min-height: 48px;
+}
+
+/* Skeleton */
+.judge-skeleton {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.skeleton-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.skeleton-title-icon {
+    font-size: 15px;
+}
+.skeleton-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.skeleton-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.skeleton-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 1fr;
+    gap: 12px;
+    align-items: center;
+}
+.skeleton-bar {
+    height: 10px;
+    border-radius: 6px;
+    background: var(--border);
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-reason {
+    margin-top: 4px;
+}
+.w-20 {
+    width: 80px;
+}
+.w-24 {
+    width: 96px;
+}
+.w-32 {
+    width: 128px;
+}
+.w-48 {
+    width: 192px;
+}
+.w-full {
+    width: 100%;
+}
+
+@keyframes shimmer {
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 0.9;
+    }
+}
+
+/* Header row */
+.judge-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.judge-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.judge-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+.judge-provider-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+}
+.judge-winner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.winner-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+.winner-name {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+}
+.winner-name.win {
+    background: rgb(22 163 74 / 12%);
+    color: var(--green);
+    border: 1px solid rgb(22 163 74 / 25%);
+}
+.winner-name.tie {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    border: 1px solid var(--border-bright);
+}
+
+/* Score grid */
+.judge-scores {
+    display: grid;
+    grid-template-columns: 120px 1fr 1fr;
+    padding: 16px 20px;
+    gap: 0;
+}
+.judge-score-col {
+    display: flex;
+    flex-direction: column;
+}
+.judge-score-header-cell {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.judge-provider-header {
+    gap: 8px;
+}
+.judge-side-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.judge-side-badge.a {
+    background: rgb(91 196 255 / 15%);
+    color: var(--blue);
+    border: 1px solid rgb(91 196 255 / 30%);
+}
+.judge-side-badge.b {
+    background: rgb(124 109 255 / 15%);
+    color: var(--accent);
+    border: 1px solid rgb(124 109 255 / 30%);
+}
+.judge-provider-label {
+    font-size: 13px;
+    font-weight: 700;
+}
+.judge-score-cell {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid var(--border);
+}
+.judge-dim-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-right: 12px;
+}
+.judge-overall-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-right: 12px;
+    font-weight: 700;
+    border-top: 1px solid var(--border-bright);
+}
+.judge-score-value {
+    gap: 10px;
+    padding: 0 16px 0 4px;
+}
+.judge-overall-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 0 16px 0 4px;
+    gap: 6px;
+    border-top: 1px solid var(--border-bright);
+}
+.score-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    width: 18px;
+    flex-shrink: 0;
+}
+.score-bar-track {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.score-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--border-bright);
+    transition: width 0.6s ease;
+}
+.winner-check {
+    font-size: 12px;
+}
+
+/* Score color states */
+.judge-score-value.win .score-number,
+.judge-overall-value.win {
+    color: var(--green);
+}
+.judge-score-value.win .score-bar-fill {
+    background: var(--green);
+}
+.judge-score-value.lose .score-number,
+.judge-overall-value.lose {
+    color: var(--text-muted);
+}
+.judge-score-value.neutral .score-number {
+    color: var(--text);
+}
+.judge-overall-value.win .winner-check {
+    color: var(--green);
+}
+
+/* Reason */
+.judge-reason {
+    padding: 12px 20px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+    font-style: italic;
 }
 </style>

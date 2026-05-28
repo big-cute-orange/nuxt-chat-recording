@@ -27,6 +27,18 @@ export interface IMeetingSummary {
     keyTopics: string[]
 }
 
+// ── Compare ───────────────────────────────────────────────────────────────────
+
+export interface ICompareResult {
+    provider: TProvider
+    result: IMeetingSummary | { error: string }
+}
+
+export interface ICompareResponse {
+    a: ICompareResult
+    b: ICompareResult
+}
+
 // ── History ───────────────────────────────────────────────────────────────────
 
 export interface IHistoryEntry {
@@ -35,7 +47,7 @@ export interface IHistoryEntry {
     meetingType: string
     provider: TProvider
     charCount: number
-    summary: IMeetingSummary
+    summary: IMeetingSummary | ICompareResponse
     transcript: string
     mode: 'single' | 'compare'
 }

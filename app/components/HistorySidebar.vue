@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import type { IHistoryEntry } from '~/types/index'
+import type { IHistoryEntry, ICompareResponse } from '~/types/index'
+
+function isCompareEntry(entry: IHistoryEntry): entry is IHistoryEntry & { summary: ICompareResponse } {
+    return entry.mode === 'compare'
+}
 
 const props = defineProps<{
     history: IHistoryEntry[]
@@ -68,12 +72,25 @@ function handleOpenEntry(entry: IHistoryEntry) {
                             </div>
                             <div class="history-item-meta">
                                 <span class="history-date">{{ props.formatDate(entry.date, true) }}</span>
-                                <span class="history-provider">{{ props.providerName(entry.provider) }}</span>
+                                <template v-if="isCompareEntry(entry)">
+                                    <span class="history-provider compare-provider">
+                                        ⇄ {{ props.providerName(entry.summary.a.provider) }} vs {{ props.providerName(entry.summary.b.provider) }}
+                                    </span>
+                                </template>
+                                <template v-else>
+                                    <span class="history-provider">{{ props.providerName(entry.provider) }}</span>
+                                </template>
                             </div>
                             <div class="history-item-stats">
-                                <span>{{ entry.summary?.participants?.length ?? 0 }} 参与人</span>
-                                <span>{{ entry.summary?.actionItems?.length ?? 0 }} 行动项</span>
-                                <span>{{ entry.charCount.toLocaleString() }} 字符</span>
+                                <template v-if="isCompareEntry(entry)">
+                                    <span>对比模式</span>
+                                    <span>{{ entry.charCount.toLocaleString() }} 字符</span>
+                                </template>
+                                <template v-else>
+                                    <span>{{ (entry.summary as any)?.participants?.length ?? 0 }} 参与人</span>
+                                    <span>{{ (entry.summary as any)?.actionItems?.length ?? 0 }} 行动项</span>
+                                    <span>{{ entry.charCount.toLocaleString() }} 字符</span>
+                                </template>
                             </div>
                         </li>
                     </ul>
@@ -316,6 +333,11 @@ function handleOpenEntry(entry: IHistoryEntry) {
     background: var(--accent-glow);
     padding: 1px 6px;
     border-radius: 10px;
+}
+
+.compare-provider {
+    color: var(--blue);
+    background: rgb(91 196 255 / 10%);
 }
 
 .history-item-stats {
