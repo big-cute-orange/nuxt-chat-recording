@@ -1,12 +1,12 @@
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import globals from 'globals';
-import eslintPluginVue from 'eslint-plugin-vue';
-import vueEslintParser from 'vue-eslint-parser';
-import jsdoc from 'eslint-plugin-jsdoc';
-import jsonc from 'eslint-plugin-jsonc';
-import regexpPlugin from 'eslint-plugin-regexp';
-import eslintPluginPrettierRecommended from 'eslint-config-prettier';
+import js from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import globals from 'globals'
+import eslintPluginVue from 'eslint-plugin-vue'
+import vueEslintParser from 'vue-eslint-parser'
+import jsdoc from 'eslint-plugin-jsdoc'
+import jsonc from 'eslint-plugin-jsonc'
+import regexpPlugin from 'eslint-plugin-regexp'
+import eslintPluginPrettierRecommended from 'eslint-config-prettier'
 
 const jsBaseRules = {
     'no-unused-vars': 'error',
@@ -21,7 +21,7 @@ const jsBaseRules = {
         { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] }, // Exceto entre declarações
     ],
     'nonblock-statement-body-position': ['error', 'below'], // Body always in a new line
-};
+}
 
 const jsDocRules = {
     'jsdoc/require-param-type': 'warn',
@@ -30,7 +30,7 @@ const jsDocRules = {
     'jsdoc/require-example': 'off',
     'jsdoc/require-jsdoc': 'off',
     'jsdoc/require-param': 'warn',
-};
+}
 
 const tsBaseRules = {
     'no-unused-vars': 'off',
@@ -53,9 +53,9 @@ const tsBaseRules = {
             ignores: ['index'],
         },
     ],
-};
+}
 
-const regExRules = { 'regexp/no-unused-capturing-group': 'off' };
+const regExRules = { 'regexp/no-unused-capturing-group': 'off' }
 
 const vueRules = {
     'no-unused-vars': 'off',
@@ -86,7 +86,7 @@ const vueRules = {
     ],
     'nonblock-statement-body-position': ['error', 'below'],
     'vue/multi-word-component-names': 'off',
-};
+}
 
 const securityRules = {
     // Prevent token exposure in client-side code
@@ -130,7 +130,7 @@ const securityRules = {
             message: 'Do not store tokens in sessionStorage.',
         },
     ],
-};
+}
 
 const vueSecurityRules = {
     ...securityRules,
@@ -164,7 +164,7 @@ const vueSecurityRules = {
     ],
     // Prevent token exposure in Vue component methods
     'vue/no-restricted-component-options': ['error', ['data']],
-};
+}
 
 export default [
     {
@@ -237,4 +237,4 @@ export default [
             ],
         },
     },
-];
+]
