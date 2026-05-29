@@ -64,7 +64,7 @@ function getProviderLabel(provider: string): string {
             <div class="header-inner">
                 <NuxtLink to="/" class="logo">
                     <span class="logo-icon">◈</span>
-                    <span class="logo-text">AI</span>
+                    <span class="logo-text">MeetNote</span>
                     <span class="logo-tag">智能会议纪要助手</span>
                 </NuxtLink>
                 <nav class="nav">

@@ -20,14 +20,18 @@ async function save() {
     if (!config.value) return
     await saveConfig(config.value)
     saved.value = true
-    setTimeout(() => { saved.value = false }, 2500)
+    setTimeout(() => {
+        saved.value = false
+    }, 2500)
 }
 
 async function reset() {
     await saveConfig(defaults)
     config.value = JSON.parse(JSON.stringify(defaults))
     saved.value = true
-    setTimeout(() => { saved.value = false }, 2500)
+    setTimeout(() => {
+        saved.value = false
+    }, 2500)
 }
 </script>
 
@@ -38,7 +42,7 @@ async function reset() {
             <div class="header-inner">
                 <NuxtLink to="/" class="logo">
                     <span class="logo-icon">◈</span>
-                    <span class="logo-text">AI</span>
+                    <span class="logo-text">MeetNote</span>
                     <span class="logo-tag">智能会议纪要助手</span>
                 </NuxtLink>
                 <nav class="nav">

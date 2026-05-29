@@ -69,7 +69,7 @@ async function handleSubmit() {
                 <NuxtLink to="/" class="back-link">← 返回对话页</NuxtLink>
                 <NuxtLink to="/" class="brand">
                     <span class="brand-icon">◈</span>
-                    <span class="brand-name">AI</span>
+                    <span class="brand-name">MeetNote</span>
                 </NuxtLink>
             </div>
         </header>
