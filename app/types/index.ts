@@ -61,40 +61,14 @@ export interface IHistoryPage {
 
 // ── Integration configs ───────────────────────────────────────────────────────
 
-export interface IJiraConfig {
-    enabled: boolean
-    baseUrl: string // e.g. https://mycompany.atlassian.net
-    email: string
-    apiToken: string
-    projectKey: string // e.g. ENG
-    issueType?: string // e.g. Task, Bug, Story
-}
-
-export interface ILinearConfig {
-    enabled: boolean
-    apiKey: string
-    teamId: string
-}
-
 export interface INotionConfig {
     enabled: boolean
     integrationToken: string
     databaseId: string
 }
 
-export interface IAzureConfig {
-    enabled: boolean
-    organization: string // e.g. mycompany
-    project: string // e.g. MyProject
-    pat: string // Personal Access Token
-    workItemType: string // Task | Bug | User Story
-}
-
 export interface IIntegrationsConfig {
-    jira: IJiraConfig
-    linear: ILinearConfig
     notion: INotionConfig
-    azure: IAzureConfig
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────

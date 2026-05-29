@@ -20,10 +20,11 @@ export default defineEventHandler(async (event: H3Event) => {
         })
     }
 
-    const items = await db.query.actionItems.findMany({
-        where: and(eq(actionItems.meetingId, meetingId as string), userId ? eq(actionItems.userId, userId) : isNull(actionItems.userId)),
-        orderBy: (fields) => [fields.createdAt],
-    })
+    const items = await db
+        .select()
+        .from(actionItems)
+        .where(and(eq(actionItems.meetingId, meetingId as string), userId ? eq(actionItems.userId, userId) : isNull(actionItems.userId)))
+        .orderBy(actionItems.createdAt)
 
     return items
 })

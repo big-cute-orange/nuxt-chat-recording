@@ -6,10 +6,7 @@ import { defineEventHandler, readBody, getRouterParam, createError, type H3Event
 import { useDb } from '#server/utils/db'
 import { actionItems } from '#server/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
-import { transitionJiraIssue } from '#server/utils/integrations/jira'
-import { updateLinearIssueState } from '#server/utils/integrations/linear'
 import { updateNotionItemStatus } from '#server/utils/integrations/notion'
-import { updateAzureWorkItemState } from '#server/utils/integrations/azure'
 
 export default defineEventHandler(async (event: H3Event) => {
     const db = useDb()
@@ -59,37 +56,15 @@ export default defineEventHandler(async (event: H3Event) => {
     return updated
 })
 
-/**
- * Sync status to external service
- * @param {string | null} service - The external service name
- * @param {string} externalId - The external service ID
- * @param {string} status - The new status
- * @param {string | null} userId - The user ID
- */
 async function syncStatusToService(service: string | null, externalId: string, status: string, userId: string | null) {
-    if (!service) return
+    if (service !== 'notion') return
 
     try {
-        if (service === 'jira') {
-            const config = await getIntegrationConfig(userId, 'jira')
+        const config = await getIntegrationConfig(userId, 'notion')
 
-            await transitionJiraIssue(config, externalId, status)
-        } else if (service === 'linear') {
-            const config = await getIntegrationConfig(userId, 'linear')
-
-            await updateLinearIssueState(config, externalId, status)
-        } else if (service === 'notion') {
-            const config = await getIntegrationConfig(userId, 'notion')
-
-            await updateNotionItemStatus(config, externalId, status)
-        } else if (service === 'azure') {
-            const config = await getIntegrationConfig(userId, 'azure')
-
-            await updateAzureWorkItemState(config, externalId, status)
-        }
+        await updateNotionItemStatus(config, externalId, status)
     } catch (err) {
         console.warn(`Failed to sync to ${service}:`, err)
-        // Don't throw — allow local update to succeed
     }
 }
 

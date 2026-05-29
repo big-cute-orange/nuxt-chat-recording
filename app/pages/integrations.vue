@@ -1,49 +1,34 @@
 <script setup lang="ts">
-import type { IIntegrationsConfig } from '~/types/index'
+import type { INotionConfig } from '~/types/index'
 
-const STORAGE_KEY = 'minutai:integrations'
-
-const defaults: IIntegrationsConfig = {
-    jira: { enabled: false, baseUrl: '', email: '', apiToken: '', projectKey: '' },
-    linear: { enabled: false, apiKey: '', teamId: '' },
+const defaults: { notion: INotionConfig } = {
     notion: { enabled: false, integrationToken: '', databaseId: '' },
-    azure: { enabled: false, organization: '', project: '', pat: '', workItemType: 'Task' },
 }
 
-const config = ref<IIntegrationsConfig>(JSON.parse(JSON.stringify(defaults)))
+const { config, loadConfig, saveConfig } = useIntegrations()
 const saved = ref(false)
+const visible = ref({ notion: false })
 
-onMounted(() => {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY)
-
-        if (raw) config.value = { ...defaults, ...JSON.parse(raw) }
-    } catch {
-        /* ignore */
+onMounted(async () => {
+    await loadConfig()
+    if (!config.value?.notion) {
+        config.value = { ...config.value, notion: { ...defaults.notion } }
     }
 })
 
-function save() {
-    // eslint-disable-next-line
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config.value))
+async function save() {
+    if (!config.value) return
+    await saveConfig(config.value)
     saved.value = true
-    setTimeout(() => {
-        saved.value = false
-    }, 2500)
+    setTimeout(() => { saved.value = false }, 2500)
 }
 
-function reset() {
+async function reset() {
+    await saveConfig(defaults)
     config.value = JSON.parse(JSON.stringify(defaults))
-    localStorage.removeItem(STORAGE_KEY)
+    saved.value = true
+    setTimeout(() => { saved.value = false }, 2500)
 }
-
-// Show/hide secret fields
-const visible = ref({ jira: false, linear: false, notion: false, azure: false })
-
-// Count enabled integrations
-const enabledCount = computed(
-    () => [config.value.jira, config.value.linear, config.value.notion, config.value.azure].filter((c) => c.enabled).length
-)
 </script>
 
 <template>
@@ -54,279 +39,86 @@ const enabledCount = computed(
                 <NuxtLink to="/" class="logo">
                     <span class="logo-icon">◈</span>
                     <span class="logo-text">AI</span>
-                    <span class="logo-tag">meeting intelligence</span>
+                    <span class="logo-tag">智能会议纪要助手</span>
                 </NuxtLink>
                 <nav class="nav">
-                    <NuxtLink to="/" class="nav-link">← Analyze</NuxtLink>
-                    <NuxtLink to="/dashboard" class="nav-link">Dashboard</NuxtLink>
-                    <span class="nav-active">Integrations</span>
+                    <NuxtLink to="/" class="nav-link">← 分析</NuxtLink>
+                    <NuxtLink to="/dashboard" class="nav-link">数据看板</NuxtLink>
+                    <span class="nav-active">集成管理</span>
                     <AuthButton />
                 </nav>
             </div>
         </header>
 
         <!-- ── Main ───────────────────────────────────────────────── -->
-        <main class="main">
+        <main v-if="config" class="main">
             <div class="page-header">
                 <div>
-                    <h1 class="title">Integrations</h1>
-                    <p class="subtitle">Send action items directly to your project management tools</p>
+                    <h1 class="title">集成管理</h1>
+                    <p class="subtitle">将行动项直接发送到你的项目管理工具</p>
                 </div>
                 <div class="page-actions">
-                    <span v-if="enabledCount" class="enabled-badge">{{ enabledCount }} active</span>
+                    <span v-if="config.notion?.enabled" class="enabled-badge">已启用</span>
                     <button class="save-btn" @click="save">
-                        {{ saved ? '✓ Saved!' : 'Save settings' }}
+                        {{ saved ? '✓ 已保存！' : '保存设置' }}
                     </button>
                 </div>
             </div>
 
-            <div class="security-notice">
-                <span class="security-icon">🔒</span>
-                <div>
-                    <strong>Your credentials stay in your browser.</strong>
-                    API tokens and keys are stored only in your browser's localStorage — they are never sent to any MinutAI server. Requests
-                    to external APIs are proxied through your local Nuxt server only when you click "Send to…".
-                </div>
-            </div>
-
-            <!-- ── Jira ─────────────────────────────────────────────── -->
-            <div class="integration-card" :class="{ active: config.jira.enabled }">
-                <div class="int-header">
-                    <div class="int-identity">
-                        <span class="int-logo jira-logo">J</span>
-                        <div>
-                            <h2 class="int-name">Jira</h2>
-                            <p class="int-desc">Atlassian Jira Software — create Tasks in any project</p>
-                        </div>
-                    </div>
-                    <label class="toggle" for="jira-toggle">
-                        <input id="jira-toggle" v-model="config.jira.enabled" type="checkbox" />
-                        <span class="toggle-track"><span class="toggle-thumb" /></span>
-                    </label>
-                </div>
-
-                <Transition name="expand">
-                    <div v-if="config.jira.enabled" class="int-fields">
-                        <div class="field-row">
-                            <div class="field">
-                                <label class="field-label">
-                                    Base URL
-                                    <span class="field-hint">your Atlassian domain</span>
-                                </label>
-                                <input v-model="config.jira.baseUrl" class="field-input" placeholder="https://yourcompany.atlassian.net" />
-                            </div>
-                            <div class="field">
-                                <label class="field-label">Project Key</label>
-                                <input v-model="config.jira.projectKey" class="field-input field-short" placeholder="ENG" />
-                            </div>
-                        </div>
-                        <div class="field-row">
-                            <div class="field">
-                                <label class="field-label">Account email</label>
-                                <input v-model="config.jira.email" class="field-input" type="email" placeholder="you@company.com" />
-                            </div>
-                            <div class="field">
-                                <label class="field-label">
-                                    API token
-                                    <a
-                                        href="https://id.atlassian.com/manage-profile/security/api-tokens"
-                                        target="_blank"
-                                        class="field-link"
-                                    >
-                                        Create token ↗
-                                    </a>
-                                </label>
-                                <div class="secret-wrap">
-                                    <input
-                                        v-model="config.jira.apiToken"
-                                        class="field-input"
-                                        :type="visible.jira ? 'text' : 'password'"
-                                        placeholder="ATATT3x…"
-                                    />
-                                    <button class="show-btn" @click="visible.jira = !visible.jira">
-                                        {{ visible.jira ? 'Hide' : 'Show' }}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </Transition>
-            </div>
-
-            <!-- ── Azure Boards ─────────────────────────────────────── -->
-            <div class="integration-card" :class="{ active: config.azure.enabled }">
-                <div class="int-header">
-                    <div class="int-identity">
-                        <span class="int-logo azure-logo">Az</span>
-                        <div>
-                            <h2 class="int-name">Azure Boards</h2>
-                            <p class="int-desc">Microsoft Azure DevOps — create Work Items in any project</p>
-                        </div>
-                    </div>
-                    <label class="toggle" for="azure-toggle">
-                        <input id="azure-toggle" v-model="config.azure.enabled" type="checkbox" />
-                        <span class="toggle-track"><span class="toggle-thumb" /></span>
-                    </label>
-                </div>
-
-                <Transition name="expand">
-                    <div v-if="config.azure.enabled" class="int-fields">
-                        <div class="field-row">
-                            <div class="field">
-                                <label class="field-label">
-                                    Organization
-                                    <span class="field-hint">from dev.azure.com/your-org</span>
-                                </label>
-                                <input v-model="config.azure.organization" class="field-input" placeholder="mycompany" />
-                            </div>
-                            <div class="field">
-                                <label class="field-label">Project</label>
-                                <input v-model="config.azure.project" class="field-input" placeholder="MyProject" />
-                            </div>
-                        </div>
-                        <div class="field-row">
-                            <div class="field">
-                                <label class="field-label">Work item type</label>
-                                <select v-model="config.azure.workItemType" class="field-input field-select">
-                                    <option>Task</option>
-                                    <option>Bug</option>
-                                    <option>User Story</option>
-                                    <option>Issue</option>
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label class="field-label">
-                                    Personal Access Token (PAT)
-                                    <a href="https://dev.azure.com" target="_blank" class="field-link">Create PAT ↗</a>
-                                </label>
-                                <div class="secret-wrap">
-                                    <input
-                                        v-model="config.azure.pat"
-                                        class="field-input"
-                                        :type="visible.azure ? 'text' : 'password'"
-                                        placeholder="PAT token…"
-                                    />
-                                    <button class="show-btn" @click="visible.azure = !visible.azure">
-                                        {{ visible.azure ? 'Hide' : 'Show' }}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="field-help">
-                            In Azure DevOps, go to
-                            <strong>User Settings → Personal Access Tokens</strong>
-                            and create a token with
-                            <strong>Work Items (Read & Write)</strong>
-                            scope.
-                        </div>
-                    </div>
-                </Transition>
-            </div>
-
-            <!-- ── Linear ───────────────────────────────────────────── -->
-            <div class="integration-card" :class="{ active: config.linear.enabled }">
-                <div class="int-header">
-                    <div class="int-identity">
-                        <span class="int-logo linear-logo">L</span>
-                        <div>
-                            <h2 class="int-name">Linear</h2>
-                            <p class="int-desc">Create issues in any Linear team</p>
-                        </div>
-                    </div>
-                    <label class="toggle" for="linear-toggle">
-                        <input id="linear-toggle" v-model="config.linear.enabled" type="checkbox" />
-                        <span class="toggle-track"><span class="toggle-thumb" /></span>
-                    </label>
-                </div>
-
-                <Transition name="expand">
-                    <div v-if="config.linear.enabled" class="int-fields">
-                        <div class="field-row">
-                            <div class="field">
-                                <label class="field-label">
-                                    API Key
-                                    <a href="https://linear.app/settings/api" target="_blank" class="field-link">Create key ↗</a>
-                                </label>
-                                <div class="secret-wrap">
-                                    <input
-                                        v-model="config.linear.apiKey"
-                                        class="field-input"
-                                        :type="visible.linear ? 'text' : 'password'"
-                                        placeholder="lin_api_…"
-                                    />
-                                    <button class="show-btn" @click="visible.linear = !visible.linear">
-                                        {{ visible.linear ? 'Hide' : 'Show' }}
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="field">
-                                <label class="field-label">
-                                    Team ID
-                                    <span class="field-hint">Settings → Team → Copy ID</span>
-                                </label>
-                                <input v-model="config.linear.teamId" class="field-input" placeholder="xxxxxxxx-xxxx-…" />
-                            </div>
-                        </div>
-                    </div>
-                </Transition>
-            </div>
-
             <!-- ── Notion ───────────────────────────────────────────── -->
-            <div class="integration-card" :class="{ active: config.notion.enabled }">
+            <div class="integration-card" :class="{ active: config.notion?.enabled }">
                 <div class="int-header">
                     <div class="int-identity">
                         <span class="int-logo notion-logo">N</span>
                         <div>
                             <h2 class="int-name">Notion</h2>
-                            <p class="int-desc">Create pages in a Notion database</p>
+                            <p class="int-desc">在 Notion 数据库中创建页面</p>
                         </div>
                     </div>
                     <label class="toggle" for="notion-toggle">
-                        <input id="notion-toggle" v-model="config.notion.enabled" type="checkbox" />
+                        <input id="notion-toggle" v-model="config.notion!.enabled" type="checkbox" />
                         <span class="toggle-track"><span class="toggle-thumb" /></span>
                     </label>
                 </div>
 
                 <Transition name="expand">
-                    <div v-if="config.notion.enabled" class="int-fields">
+                    <div v-if="config.notion?.enabled" class="int-fields">
                         <div class="field-row">
                             <div class="field">
                                 <label class="field-label">
-                                    Integration token
-                                    <a href="https://www.notion.so/my-integrations" target="_blank" class="field-link">
-                                        Create integration ↗
-                                    </a>
+                                    集成令牌
+                                    <a href="https://www.notion.so/my-integrations" target="_blank" class="field-link">创建集成 ↗</a>
                                 </label>
                                 <div class="secret-wrap">
                                     <input
-                                        v-model="config.notion.integrationToken"
+                                        v-model="config.notion!.integrationToken"
                                         class="field-input"
                                         :type="visible.notion ? 'text' : 'password'"
                                         placeholder="secret_…"
                                     />
                                     <button class="show-btn" @click="visible.notion = !visible.notion">
-                                        {{ visible.notion ? 'Hide' : 'Show' }}
+                                        {{ visible.notion ? '隐藏' : '显示' }}
                                     </button>
                                 </div>
                             </div>
                             <div class="field">
                                 <label class="field-label">
-                                    Database ID
-                                    <span class="field-hint">from the database URL</span>
+                                    数据库 ID
+                                    <span class="field-hint">从数据库 URL 中获取</span>
                                 </label>
                                 <input
-                                    v-model="config.notion.databaseId"
+                                    v-model="config.notion!.databaseId"
                                     class="field-input"
                                     placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                                 />
                             </div>
                         </div>
                         <div class="field-help">
-                            Open your database in Notion → click
-                            <strong>Share</strong>
-                            → add your integration. The database ID is the 32-character string in the URL before the
+                            在 Notion 中打开你的数据库 → 点击
+                            <strong>分享</strong>
+                            → 添加你的集成。数据库 ID 是 URL 中
                             <code>?</code>
-                            .
+                            之前的 32 位字符串。
                         </div>
                     </div>
                 </Transition>
@@ -334,9 +126,9 @@ const enabledCount = computed(
 
             <!-- Bottom save -->
             <div class="bottom-actions">
-                <button class="text-btn" @click="reset">Reset all</button>
+                <button class="text-btn" @click="reset">重置全部</button>
                 <button class="save-btn large" @click="save">
-                    {{ saved ? '✓ Saved!' : 'Save settings' }}
+                    {{ saved ? '✓ 已保存！' : '保存设置' }}
                 </button>
             </div>
         </main>
@@ -472,30 +264,6 @@ const enabledCount = computed(
     border-radius: 20px;
 }
 
-/* Security notice */
-.security-notice {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    background: rgb(91 196 255 / 5%);
-    border: 1px solid rgb(91 196 255 / 15%);
-    border-radius: 10px;
-    padding: 14px 16px;
-    font-size: 13px;
-    color: var(--text-muted);
-    line-height: 1.6;
-}
-
-.security-icon {
-    font-size: 18px;
-    flex-shrink: 0;
-    margin-top: 1px;
-}
-
-.security-notice strong {
-    color: var(--text);
-}
-
 /* Integration card */
 .integration-card {
     background: var(--bg-card);
@@ -533,25 +301,6 @@ const enabledCount = computed(
     font-weight: 800;
     font-size: 14px;
     flex-shrink: 0;
-}
-
-.jira-logo {
-    background: rgb(38 132 255 / 15%);
-    color: #2684ff;
-    border: 1px solid rgb(38 132 255 / 25%);
-}
-
-.azure-logo {
-    background: rgb(0 120 212 / 15%);
-    color: #0078d4;
-    border: 1px solid rgb(0 120 212 / 25%);
-    font-size: 12px;
-}
-
-.linear-logo {
-    background: rgb(91 100 240 / 15%);
-    color: #5b64f0;
-    border: 1px solid rgb(91 100 240 / 25%);
 }
 
 .notion-logo {

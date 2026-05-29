@@ -6,10 +6,7 @@ import { defineEventHandler, readBody, createError, type H3Event } from 'h3'
 import { useDb } from '#server/utils/db'
 import { actionItems, meetings, integrationsConfig } from '#server/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
-import { createJiraIssue } from '#server/utils/integrations/jira'
-import { createLinearIssue } from '#server/utils/integrations/linear'
 import { createNotionItem } from '#server/utils/integrations/notion'
-import { createAzureWorkItem } from '#server/utils/integrations/azure'
 
 interface CreateActionItemRequest {
     meetingId: string
@@ -20,7 +17,7 @@ interface CreateActionItemRequest {
         dueDate?: string
         priority?: 'LOW' | 'MEDIUM' | 'HIGH'
     }>
-    pushToService?: 'jira' | 'linear' | 'notion' | 'azure'
+    pushToService?: 'notion'
 }
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -104,38 +101,20 @@ export default defineEventHandler(async (event: H3Event) => {
     }
 })
 
-/**
- * Push action item to external service (Jira, Linear, Notion, Azure DevOps)
- * @param {string} service - The external service name (jira, linear, notion, or azure)
- * @param {CreateActionItemRequest['items'][0]} item - The action item data to push
- * @param {object} user - The user session object
- * @param {string | null} user.id - The user ID or null for anonymous users
- * @returns {Promise<{ id: string; url: string }>} Promise with the external service ID and URL
- */
 async function pushActionItemToService(
     service: string,
     item: CreateActionItemRequest['items'][0],
     user: { id: string | null }
 ): Promise<{ id: string; url: string }> {
-    if (service === 'jira') {
-        return createJiraActionItem(item, user)
-    } else if (service === 'linear') {
-        return createLinearActionItem(item, user)
-    } else if (service === 'notion') {
-        return createNotionActionItem(item, user)
-    } else if (service === 'azure') {
-        return createAzureActionItem(item, user)
+    if (service === 'notion') {
+        const config = await getIntegrationConfig(user.id, 'notion')
+
+        return createNotionItem(config, item)
     }
 
     throw new Error(`Unsupported service: ${service}`)
 }
 
-/**
- * Helper: Get integration config from DB
- * @param {string | null} userId - The user ID or null for unauthenticated users
- * @param {string} service - The integration service name (jira, linear, notion, or azure)
- * @returns {Promise<any>} Promise with the parsed integration configuration
- */
 async function getIntegrationConfig(userId: string | null, service: string) {
     const db = useDb()
 
@@ -152,56 +131,4 @@ async function getIntegrationConfig(userId: string | null, service: string) {
     }
 
     return JSON.parse(configs[0]!.config)
-}
-
-/**
- * Create Jira action item
- * @param {CreateActionItemRequest['items'][0]} item - The action item data to push
- * @param {object} user - The user session object
- * @param {string | null} user.id - The user ID or null for anonymous users
- * @returns {Promise<{ id: string; url: string }>} Promise with the external service ID and URL
- */
-async function createJiraActionItem(item: CreateActionItemRequest['items'][0], user: { id: string | null }) {
-    const config = await getIntegrationConfig(user.id, 'jira')
-
-    return createJiraIssue(config, item)
-}
-
-/**
- * Create Linear action item
- * @param {CreateActionItemRequest['items'][0]} item - The action item data to push
- * @param {object} user - The user session object
- * @param {string | null} user.id - The user ID or null for anonymous users
- * @returns {Promise<{ id: string; url: string }>} Promise with the external service ID and URL
- */
-async function createLinearActionItem(item: CreateActionItemRequest['items'][0], user: { id: string | null }) {
-    const config = await getIntegrationConfig(user.id, 'linear')
-
-    return createLinearIssue(config, item)
-}
-
-/**
- * Create Notion action item
- * @param {CreateActionItemRequest['items'][0]} item - The action item data to push
- * @param {object} user - The user session object
- * @param {string | null} user.id - The user ID or null for anonymous users
- * @returns {Promise<{ id: string; url: string }>} Promise with the external service ID and URL
- */
-async function createNotionActionItem(item: CreateActionItemRequest['items'][0], user: { id: string | null }) {
-    const config = await getIntegrationConfig(user.id, 'notion')
-
-    return createNotionItem(config, item)
-}
-
-/**
- * Create Azure action item
- * @param {CreateActionItemRequest['items'][0]} item - The action item data to push
- * @param {object} user - The user session object
- * @param {string | null} user.id - The user ID or null for anonymous users
- * @returns {Promise<{ id: string; url: string }>} Promise with the external service ID and URL
- */
-async function createAzureActionItem(item: CreateActionItemRequest['items'][0], user: { id: string | null }) {
-    const config = await getIntegrationConfig(user.id, 'azure')
-
-    return createAzureWorkItem(config, item)
 }

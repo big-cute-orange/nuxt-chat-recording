@@ -8,7 +8,7 @@ import { useDb } from '#server/utils/db'
 import { integrationsConfig } from '#server/db/schema'
 import type { IIntegrationsConfig } from '~/types'
 
-const VALID_SERVICES: (keyof IIntegrationsConfig)[] = ['jira', 'linear', 'notion', 'azure']
+const VALID_SERVICES: (keyof IIntegrationsConfig)[] = ['notion']
 
 export default defineEventHandler(async (event: H3Event) => {
     const db = useDb()

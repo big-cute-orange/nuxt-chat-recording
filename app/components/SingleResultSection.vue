@@ -12,7 +12,7 @@ const props = defineProps<{
     enabledIntegrations: TIntegrationId[]
     integrationMeta: Record<TIntegrationId, { label: string; logo: string; logoClass: string }>
     intStatus: Record<TIntegrationId, ISendStatus>
-    sendTo: (id: TIntegrationId, result: IMeetingSummary) => void
+    sendTo: (id: TIntegrationId, result: IMeetingSummary, meetingId: string | null) => void
 }>()
 
 const emit = defineEmits<{
@@ -414,7 +414,7 @@ function downloadMarkdown(s: IMeetingSummary, prov?: string) {
             <div v-if="!editing && hasIntegrations" class="card">
                 <div class="card-header">
                     <span class="card-icon">⇄</span>
-                    <h2 class="card-title">Send to…</h2>
+                    <h2 class="card-title">同步到…</h2>
                 </div>
                 <div class="integrations-grid">
                     <div v-for="id in enabledIntegrations" :key="id" class="integration-panel">
@@ -423,10 +423,10 @@ function downloadMarkdown(s: IMeetingSummary, prov?: string) {
                                 {{ integrationMeta[id].logo }}
                             </span>
                             <span class="int-panel-name">{{ integrationMeta[id].label }}</span>
-                            <button class="send-btn" :disabled="intStatus[id].loading" @click="sendTo(id, result)">
+                            <button class="send-btn" :disabled="intStatus[id].loading" @click="sendTo(id, result, activeHistoryId)">
                                 <span v-if="intStatus[id].loading" class="spinner" />
-                                <span v-else-if="intStatus[id].results.length">✓ Sent</span>
-                                <span v-else>Send {{ result.actionItems.length }} items</span>
+                                <span v-else-if="intStatus[id].results.length">✓ 已同步</span>
+                                <span v-else>同步 {{ result.actionItems.length }} 项</span>
                             </button>
                         </div>
 
@@ -444,8 +444,8 @@ function downloadMarkdown(s: IMeetingSummary, prov?: string) {
                 </div>
 
                 <div v-if="!hasIntegrations" class="int-empty">
-                    No integrations configured.
-                    <NuxtLink to="/integrations" class="int-setup-link">Set up integrations →</NuxtLink>
+                    未配置集成
+                    <NuxtLink to="/integrations" class="int-setup-link">设置集成 →</NuxtLink>
                 </div>
             </div>
 
@@ -596,25 +596,6 @@ function downloadMarkdown(s: IMeetingSummary, prov?: string) {
     font-weight: 800;
     font-size: 11px;
     flex-shrink: 0;
-}
-
-.jira-logo {
-    background: rgb(38 132 255 / 15%);
-    color: #2684ff;
-    border: 1px solid rgb(38 132 255 / 25%);
-}
-
-.azure-logo {
-    background: rgb(0 120 212 / 15%);
-    color: #0078d4;
-    border: 1px solid rgb(0 120 212 / 25%);
-    font-size: 9px;
-}
-
-.linear-logo {
-    background: rgb(91 100 240 / 15%);
-    color: #5b64f0;
-    border: 1px solid rgb(91 100 240 / 25%);
 }
 
 .notion-logo {

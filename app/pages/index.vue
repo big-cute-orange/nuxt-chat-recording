@@ -19,7 +19,7 @@ const {
     uploadProgress,
     reset: transcribeReset,
 } = useTranscribe()
-const { enabledIntegrations, hasIntegrations, status: intStatus, sendTo, integrationMeta, loadConfig: loadIntegrations } = useIntegrations()
+const { enabledIntegrations, hasIntegrations, status: intStatus, sendTo, resetStatus, loadSentItems, integrationMeta, loadConfig: loadIntegrations } = useIntegrations()
 const {
     history,
     total: historyTotal,
@@ -89,6 +89,7 @@ function openHistoryEntry(entry: IHistoryEntry) {
         mode.value = 'compare'
         reset()
         compareReset()
+        resetStatus('notion')
         nextTick(() => {
             compareResults.value = data
         })
@@ -98,6 +99,7 @@ function openHistoryEntry(entry: IHistoryEntry) {
         reset()
         nextTick(() => {
             result.value = entry.summary as IMeetingSummary
+            loadSentItems(entry.id)
         })
     }
 }
@@ -305,6 +307,7 @@ async function handleSubmit() {
 }
 
 function handleReset() {
+    resetStatus('notion')
     reset()
     compareReset()
     transcribeReset()
@@ -387,10 +390,10 @@ function toggleCompareProvider(id: TProvider) {
                         数据看板
                     </NuxtLink>
 
-                    <!-- <NuxtLink to="/integrations" class="history-btn">
+                    <NuxtLink to="/integrations" class="history-btn">
                         <span class="history-btn-icon">⇄</span>
-                        Integrations
-                    </NuxtLink> -->
+                        集成管理
+                    </NuxtLink>
 
                     <HistorySidebar
                         :history="history"
