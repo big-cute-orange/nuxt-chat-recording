@@ -26,7 +26,7 @@ const loadItems = async () => {
     error.value = ''
 
     try {
-        items.value = await $fetch(`/api/action-items?meetingId=${props.meetingId}`)
+        items.value = await $fetch<IActionItem[]>('/api/action-items', { query: { meetingId: props.meetingId } })
     } catch (err: unknown) {
         console.error('Failed to load action items:', err)
 
