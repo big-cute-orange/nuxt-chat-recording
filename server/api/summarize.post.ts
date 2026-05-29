@@ -88,6 +88,7 @@ export default defineEventHandler(async (event: H3Event) => {
         const response = await client.chat.completions.create({
             model,
             max_tokens: 2048,
+            temperature: 0.2,
             messages: [
                 { role: 'system', content: SYSTEM_PROMPT },
                 { role: 'user', content: userMessage },

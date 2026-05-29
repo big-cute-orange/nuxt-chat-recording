@@ -39,6 +39,7 @@ async function callProvider(provider: TProvider, text: string, config: Record<st
     const response = await client.chat.completions.create({
         model,
         max_tokens: 2048,
+        temperature: 0.2,
         messages: [
             { role: 'system', content: SYSTEM_PROMPT },
             { role: 'user', content: userMessage },
