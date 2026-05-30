@@ -7,18 +7,23 @@ import { useDb } from '#server/utils/db'
 import { actionItems as actionItemsTable } from '#server/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 
+type TNotionPropertyValue =
+    | { title: Array<{ text: { content: string } }> }
+    | { select: { name: string; color?: string } }
+    | { multi_select: Array<{ name: string }> }
+    | { rich_text: Array<{ text: { content: string } }> }
+    | { date: { start: string } }
+
 interface INotionPagePayload {
     parent: { database_id: string }
-    properties: Record<string, unknown>
+    properties: Record<string, TNotionPropertyValue>
     children: Array<{
         object: 'block'
         type: 'paragraph'
         paragraph: {
             rich_text: Array<{
                 type: 'text'
-                text: {
-                    content: string
-                }
+                text: { content: string }
             }>
         }
     }>
@@ -71,24 +76,17 @@ export default defineEventHandler(async (event: H3Event) => {
 
     const titleProp =
         findProp('Name', 'Task', 'Title', 'Issue', 'Todo') ?? Object.keys(props).find((k) => props[k]?.type === 'title') ?? 'Name'
-    const statusProp = findProp('Status', 'State')
     const assigneeProp = findProp('Assignee', 'Owner', 'Assigned to', 'Person')
     const priorityProp = findProp('Priority')
     const tagsProp = findProp('Tags', 'Label', 'Labels')
+    const deadlineProp = findProp('Deadline', 'Due Date', 'Due', 'Date')
 
     const results: { task: string; url: string | null; error: string | null }[] = []
 
     for (const item of actionItems as IActionItem[]) {
         try {
             // Build properties dynamically based on what the database has
-            const properties: Record<
-                string,
-                {
-                    title?: Array<{ text: { content: string } }>
-                    select?: { name: string; color?: string }
-                    multi_select?: Array<{ name: string }>
-                }
-            > = {
+            const properties: Record<string, TNotionPropertyValue> = {
                 [titleProp]: { title: [{ text: { content: item.task } }] },
             }
 
@@ -104,6 +102,48 @@ export default defineEventHandler(async (event: H3Event) => {
                 }
             }
 
+            // Map owner to assignee property
+            if (assigneeProp && item.owner) {
+                const propType = props[assigneeProp]?.type
+                if (propType === 'rich_text') {
+                    properties[assigneeProp] = {
+                        rich_text: [{ text: { content: item.owner } }],
+                    }
+                } else if (propType === 'people') {
+                    // For people type, we can only set by name if the person exists in the workspace
+                    // Since we don't have the person ID, we'll fall back to rich_text or skip
+                    // Note: Notion API requires person ID for people type, so this might not work
+                    // We'll add it to the description instead
+                }
+            }
+
+            // Map deadline to date property
+            if (deadlineProp && item.deadline && props[deadlineProp]?.type === 'date') {
+                // Try to parse the deadline into ISO format
+                try {
+                    const dateStr = item.deadline.trim()
+                    // If it's already in ISO format or a valid date string
+                    const date = new Date(dateStr)
+                    if (!isNaN(date.getTime())) {
+                        properties[deadlineProp] = {
+                            date: { start: date.toISOString().split('T')[0]! },
+                        }
+                    }
+                } catch {
+                    console.warn('[notion] Could not parse deadline:', item.deadline)
+                }
+            }
+
+            // Build description content for the page body
+            const descriptionParts: string[] = []
+            if (item.owner && (!assigneeProp || props[assigneeProp]?.type === 'people')) {
+                descriptionParts.push(`负责人: ${item.owner}`)
+            }
+            if (item.deadline && (!deadlineProp || props[deadlineProp]?.type !== 'date')) {
+                descriptionParts.push(`截止日期: ${item.deadline}`)
+            }
+            descriptionParts.push(`由 MeetNote 从${meetingType ?? '会议'}中创建`)
+
             const payload: INotionPagePayload = {
                 parent: { database_id: databaseId },
                 properties,
@@ -116,7 +156,7 @@ export default defineEventHandler(async (event: H3Event) => {
                                 {
                                     type: 'text',
                                     text: {
-                                        content: `Owner: ${item.owner}\nDeadline: ${item.deadline}\nCreated by MinutAI from ${meetingType ?? 'meeting'}.`,
+                                        content: descriptionParts.join('\n'),
                                     },
                                 },
                             ],
