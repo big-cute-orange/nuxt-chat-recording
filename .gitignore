@@ -8,3 +8,9 @@ dist
 data/
 
 docs/
+
+# Claude Code
+.claude/memory/
+.claude/**/runs/
+.claude/settings.local.json
+.claude/CLAUDE.local.md
