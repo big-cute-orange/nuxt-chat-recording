@@ -41,6 +41,10 @@ export default defineNuxtConfig({
         tursoDbUrl: process.env.TURSO_DB_URL || '',
         tursoAuthToken: process.env.TURSO_AUTH_TOKEN || '',
 
+        // Upstash Vector — for RAG meeting history Q&A
+        upstashVectorUrl: process.env.UPSTASH_VECTOR_REST_URL || '',
+        upstashVectorToken: process.env.UPSTASH_VECTOR_REST_TOKEN || '',
+
         // nuxt-auth-utils session secret (min 32 chars)
         // Set NUXT_SESSION_PASSWORD in .env for production
         session: {

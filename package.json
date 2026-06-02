@@ -21,7 +21,9 @@
     "dependencies": {
         "@anthropic-ai/sdk": "^0.27.0",
         "@google/generative-ai": "^0.21.0",
+        "@langchain/textsplitters": "^1.0.1",
         "@libsql/client": "^0.17.0",
+        "@upstash/vector": "^1.2.3",
         "drizzle-orm": "^0.45.1",
         "mammoth": "^1.7.2",
         "nuxt": "^4.0.0",
