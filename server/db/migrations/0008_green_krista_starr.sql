@@ -1,0 +1,1 @@
+ALTER TABLE `rag_index_jobs` ADD `chunk_ids` text;

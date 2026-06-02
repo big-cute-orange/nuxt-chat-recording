@@ -160,6 +160,36 @@ export const judgeResults = sqliteTable(
     })
 )
 
+// ── rag_index_jobs ────────────────────────────────────────────────────────────
+// Tracks vector indexing status per meeting for the RAG Q&A feature.
+
+export const ragIndexJobs = sqliteTable(
+    'rag_index_jobs',
+    {
+        id: text('id').primaryKey(),
+        meetingId: text('meeting_id')
+            .notNull()
+            .unique()
+            .references(() => meetings.id, { onDelete: 'cascade' }),
+        userId: text('user_id'),
+        status: text('status').notNull().default('pending'), // 'pending' | 'running' | 'succeeded' | 'failed'
+        chunkCount: integer('chunk_count'),
+        chunkIds: text('chunk_ids'), // JSON array of Upstash vector IDs for this meeting
+        error: text('error'),
+        createdAt: text('created_at')
+            .notNull()
+            .default(sql`CURRENT_TIMESTAMP`),
+        updatedAt: text('updated_at')
+            .notNull()
+            .default(sql`CURRENT_TIMESTAMP`),
+    },
+    (table) => ({
+        meetingIdIdx: index('rag_index_jobs_meeting_id_idx').on(table.meetingId),
+        userIdIdx: index('rag_index_jobs_user_id_idx').on(table.userId),
+        statusIdx: index('rag_index_jobs_status_idx').on(table.status),
+    })
+)
+
 // ── Export types for use in server and client code ──────────────────────────────
 export type IUser = typeof users.$inferSelect
 export type IMeeting = typeof meetings.$inferSelect
@@ -167,3 +197,4 @@ export type IIntegrationConfig = typeof integrationsConfig.$inferSelect
 export type IActionItem = typeof actionItems.$inferSelect
 export type IAiLog = typeof aiLogs.$inferSelect
 export type IJudgeResult = typeof judgeResults.$inferSelect
+export type IRagIndexJob = typeof ragIndexJobs.$inferSelect
