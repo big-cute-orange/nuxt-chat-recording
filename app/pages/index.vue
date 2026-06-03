@@ -76,6 +76,29 @@ const hasResult = computed(() => !!result.value || !!compareResults.value)
 
 // ── History ───────────────────────────────────────────────────────────────────
 const activeHistoryId = ref<string | null>(null)
+const ragStatus = ref<Record<string, string>>({})
+
+async function loadRagStatus() {
+    try {
+        const data = await $fetch<Record<string, string>>('/api/rag/status')
+
+        ragStatus.value = data
+    } catch {
+        // RAG not configured — silently ignore
+    }
+}
+
+async function triggerRagIndex(meetingId: string) {
+    ragStatus.value[meetingId] = 'pending'
+
+    try {
+        const data = await $fetch<{ status: string }>(`/api/rag/index/${meetingId}`, { method: 'POST' })
+
+        ragStatus.value[meetingId] = data.status
+    } catch {
+        ragStatus.value[meetingId] = 'failed'
+    }
+}
 
 async function onDeleteHistoryEntry(id: string) {
     await historyRemove(id)
@@ -117,6 +140,7 @@ onMounted(async () => {
     loadIntegrations()
     await migrateFromLocalStorage()
     await historyLoad()
+    loadRagStatus()
 })
 
 // ── File parsers ──────────────────────────────────────────────────────────────
@@ -305,12 +329,14 @@ async function handleSubmit() {
 
         if (result.value) {
             activeHistoryId.value = await historyAdd(result.value, submittedText.value, provider.value)
+            triggerRagIndex(activeHistoryId.value)
         }
     } else {
         await compare(transcriptText.value, compareProviders.value)
 
         if (compareResults.value) {
             activeHistoryId.value = await historyAdd(compareResults.value, submittedText.value, compareProviders.value[0], 'compare')
+            triggerRagIndex(activeHistoryId.value)
         }
     }
 }
@@ -412,10 +438,12 @@ function toggleCompareProvider(id: TProvider) {
                         :history-loading="historyLoading"
                         :provider-name="providerName"
                         :format-date="formatDate"
+                        :rag-status="ragStatus"
                         @clear="historyClear"
                         @load-more="historyLoadMore"
                         @open-entry="openHistoryEntry"
                         @delete-entry="onDeleteHistoryEntry"
+                        @retry-index="triggerRagIndex"
                     />
 
                     <!-- Mode toggle -->
