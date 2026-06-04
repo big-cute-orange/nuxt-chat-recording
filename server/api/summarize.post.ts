@@ -1,50 +1,8 @@
-import OpenAI from 'openai'
 import { defineEventHandler, readBody, setResponseHeaders, createError, type H3Event } from 'h3'
 import { version as promptVersion, transcriptPrompt, freeNotesPrompt } from '../prompts/index'
 import { MeetingSummarySchema } from '~~/shared/schemas/meeting'
 import { aiLogs } from '../db/schema'
-
-type TProvider = 'deepseek' | 'qwen' | 'doubao'
-
-interface IProviderConfig {
-    client: OpenAI
-    model: string
-    apiKeyName: string
-}
-
-function buildProviderConfig(provider: TProvider, config: Record<string, string>): IProviderConfig {
-    switch (provider) {
-        case 'deepseek':
-            return {
-                client: new OpenAI({
-                    apiKey: config.deepseekApiKey,
-                    baseURL: 'https://api.deepseek.com/v1',
-                }),
-                model: 'deepseek-chat',
-                apiKeyName: 'DeepSeek API key',
-            }
-        case 'qwen':
-            return {
-                client: new OpenAI({
-                    apiKey: config.qwenApiKey,
-                    baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-                }),
-                model: 'qwen-plus',
-                apiKeyName: 'Qwen API key',
-            }
-        case 'doubao':
-            return {
-                client: new OpenAI({
-                    apiKey: config.dobaoApiKey,
-                    baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
-                    timeout: 30_000, // 30s，防止接入点 ID 错误时无限挂起
-                }),
-                // 豆包需要填写你在火山引擎创建的推理接入点 ID
-                model: config.dobaoModelId || '',
-                apiKeyName: 'Doubao API key',
-            }
-    }
-}
+import { buildProviderConfig, type TProvider } from '../utils/ai'
 
 export default defineEventHandler(async (event: H3Event) => {
     const config = useRuntimeConfig()
@@ -114,6 +72,7 @@ export default defineEventHandler(async (event: H3Event) => {
             .replace(/```json\n?/g, '')
             .replace(/```\n?/g, '')
             .trim()
+
         try {
             let validationPassed = false
             let validationErrors: string | null = null

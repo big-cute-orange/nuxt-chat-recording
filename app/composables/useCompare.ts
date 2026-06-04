@@ -47,6 +47,7 @@ export function useCompare() {
 
             if (!response.ok) {
                 const err = await response.json()
+
                 throw new Error(err.message || 'Request failed.')
             }
 
@@ -87,6 +88,7 @@ export function useCompare() {
             if (!response.ok) return
 
             const data = await response.json()
+
             judgeResult.value = data ?? null
         } catch {
             // silently skip

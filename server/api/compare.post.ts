@@ -3,33 +3,14 @@ import { defineEventHandler, readBody, createError, type H3Event } from 'h3'
 import { MeetingSummarySchema } from '~~/shared/schemas/meeting'
 import { version as promptVersion, transcriptPrompt } from '../prompts/index'
 import { aiLogs } from '../db/schema'
+import { buildProviderConfig, type TProvider } from '../utils/ai'
 
 const SYSTEM_PROMPT = transcriptPrompt
 
-type TProvider = 'deepseek' | 'qwen' | 'doubao'
-
 function buildClient(provider: TProvider, config: Record<string, string>): { client: OpenAI; model: string } {
-    switch (provider) {
-        case 'deepseek':
-            if (!config.deepseekApiKey) throw new Error('DeepSeek API key not configured.')
-            return {
-                client: new OpenAI({ apiKey: config.deepseekApiKey, baseURL: 'https://api.deepseek.com/v1' }),
-                model: 'deepseek-chat',
-            }
-        case 'qwen':
-            if (!config.qwenApiKey) throw new Error('Qwen API key not configured.')
-            return {
-                client: new OpenAI({ apiKey: config.qwenApiKey, baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1' }),
-                model: 'qwen-plus',
-            }
-        case 'doubao':
-            if (!config.dobaoApiKey) throw new Error('Doubao API key not configured.')
-            if (!config.dobaoModelId) throw new Error('Doubao model endpoint ID (DOBAO_MODEL_ID) not configured.')
-            return {
-                client: new OpenAI({ apiKey: config.dobaoApiKey, baseURL: 'https://ark.cn-beijing.volces.com/api/v3', timeout: 120_000 }),
-                model: config.dobaoModelId,
-            }
-    }
+    const { client, model } = buildProviderConfig(provider, config)
+
+    return { client, model }
 }
 
 async function callProvider(provider: TProvider, text: string, config: Record<string, string>): Promise<string> {
@@ -55,10 +36,13 @@ function parseResult(raw: string) {
         .replace(/```\n?/g, '')
         .trim()
     const result = MeetingSummarySchema.safeParse(JSON.parse(cleaned))
+
     if (!result.success) {
         console.warn('[AI] Schema validation failed:', result.error.flatten())
+
         return { data: null, parsed: result }
     }
+
     return { data: result.data, parsed: result }
 }
 
@@ -87,6 +71,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
         try {
             const { data, parsed } = parseResult(settled.value)
+
             await useDb()
                 .insert(aiLogs)
                 .values({
@@ -101,6 +86,7 @@ export default defineEventHandler(async (event: H3Event) => {
                 .catch(() => {
                     /* 日志写失败不影响主流程 */
                 })
+
             return data
         } catch {
             return { error: 'Failed to parse response as JSON.' }
