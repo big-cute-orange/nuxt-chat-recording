@@ -3,9 +3,9 @@
 // Filtered by userId from session when auth is active (nullable in anonymous mode).
 
 import { defineEventHandler, getQuery, type H3Event } from 'h3'
-import { desc, eq, sql } from 'drizzle-orm'
+import { desc, eq, sql, inArray } from 'drizzle-orm'
 import { useDb } from '#server/utils/db'
-import { meetings } from '#server/db/schema'
+import { meetings, ragIndexJobs } from '#server/db/schema'
 import type { IHistoryEntry } from '~/types'
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -33,14 +33,31 @@ export default defineEventHandler(async (event: H3Event) => {
 
     const total = countRows[0]?.count ?? 0
 
-    const data: IHistoryEntry[] = rows
+    // Fetch RAG index statuses for this page of meetings
+    const meetingIds = rows.map((r) => r.id)
+    const ragStatusMap: Record<string, string> = {}
+
+    if (meetingIds.length > 0) {
+        const ragRows = await db
+            .select({ meetingId: ragIndexJobs.meetingId, status: ragIndexJobs.status })
+            .from(ragIndexJobs)
+            .where(inArray(ragIndexJobs.meetingId, meetingIds))
+
+        for (const r of ragRows) {
+            ragStatusMap[r.meetingId] = r.status
+        }
+    }
+
+    const data: (IHistoryEntry & { indexStatus?: string })[] = rows
         .map((row: (typeof rows)[number]) => {
             let summary
+
             try {
                 summary = JSON.parse(row.summary)
             } catch {
                 return null
             }
+
             return {
                 id: row.id,
                 date: row.date,
@@ -50,9 +67,10 @@ export default defineEventHandler(async (event: H3Event) => {
                 transcript: row.transcript,
                 summary,
                 mode: row.mode as IHistoryEntry['mode'],
+                indexStatus: ragStatusMap[row.id] ?? null,
             }
         })
-        .filter((entry): entry is IHistoryEntry => entry !== null)
+        .filter((entry): entry is IHistoryEntry & { indexStatus?: string } => entry !== null)
 
     return { data, total, page, limit }
 })

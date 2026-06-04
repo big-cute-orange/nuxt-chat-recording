@@ -3,7 +3,7 @@
 
 import { defineEventHandler, readBody, createError, type H3Event } from 'h3'
 import { useDb } from '#server/utils/db'
-import { meetings } from '#server/db/schema'
+import { meetings, ragIndexJobs } from '#server/db/schema'
 import type { IHistoryEntry } from '~/types'
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -27,8 +27,10 @@ export default defineEventHandler(async (event: H3Event) => {
 
     // For compare mode, derive meetingType from result A if available
     let meetingType = summary.meetingType ?? 'Meeting'
+
     if (mode === 'compare') {
         const resultA = summary?.a?.result
+
         meetingType = (resultA && !('error' in resultA) ? resultA.meetingType : null) ?? '对比分析'
     }
 
@@ -46,6 +48,19 @@ export default defineEventHandler(async (event: H3Event) => {
     }
 
     await db.insert(meetings).values(entry)
+
+    // Create a pending RAG index job so the frontend can trigger indexing
+    await db
+        .insert(ragIndexJobs)
+        .values({
+            id: crypto.randomUUID(),
+            meetingId: id,
+            userId,
+            status: 'pending',
+            createdAt: now,
+            updatedAt: now,
+        })
+        .onConflictDoNothing()
 
     const result: IHistoryEntry = {
         id,

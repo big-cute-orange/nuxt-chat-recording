@@ -4,7 +4,8 @@
 import { defineEventHandler, getRouterParam, createError, type H3Event } from 'h3'
 import { and, eq } from 'drizzle-orm'
 import { useDb } from '#server/utils/db'
-import { meetings } from '#server/db/schema'
+import { meetings, ragIndexJobs } from '#server/db/schema'
+import { deleteMeetingVectors } from '#server/services/rag/vector'
 
 export default defineEventHandler(async (event: H3Event) => {
     const db = useDb()
@@ -29,6 +30,27 @@ export default defineEventHandler(async (event: H3Event) => {
 
     if (!rows.length) {
         throw createError({ statusCode: 404, message: 'Entry not found.' })
+    }
+
+    // Best-effort: delete vectors from Upstash before removing the DB row
+    try {
+        const config = useRuntimeConfig()
+
+        if (config.upstashVectorUrl && config.upstashVectorToken) {
+            const [job] = await db
+                .select({ chunkIds: ragIndexJobs.chunkIds })
+                .from(ragIndexJobs)
+                .where(eq(ragIndexJobs.meetingId, id))
+                .limit(1)
+
+            if (job?.chunkIds) {
+                const chunkIds: string[] = JSON.parse(job.chunkIds)
+
+                await deleteMeetingVectors(chunkIds, config.upstashVectorUrl, config.upstashVectorToken)
+            }
+        }
+    } catch {
+        // Vector deletion failure must not block the DB delete
     }
 
     await db.delete(meetings).where(and(eq(meetings.id, id), eq(meetings.userId, userId)))
