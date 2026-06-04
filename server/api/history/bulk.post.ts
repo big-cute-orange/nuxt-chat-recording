@@ -32,7 +32,7 @@ export default defineEventHandler(async (event: H3Event) => {
         }
 
         // Skip existing entries to make the operation idempotent
-        await db
+        const res = await db
             .insert(meetings)
             .values({
                 id: entry.id,
@@ -48,7 +48,10 @@ export default defineEventHandler(async (event: H3Event) => {
             })
             .onConflictDoNothing()
 
-        inserted++
+        // Only count rows that were actually inserted (skipped conflicts affect 0 rows)
+        if (res.rowsAffected > 0) {
+            inserted++
+        }
     }
 
     return { inserted }
