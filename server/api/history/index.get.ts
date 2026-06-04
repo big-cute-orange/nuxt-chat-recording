@@ -48,7 +48,7 @@ export default defineEventHandler(async (event: H3Event) => {
         }
     }
 
-    const data: (IHistoryEntry & { indexStatus?: string })[] = rows
+    const data: (IHistoryEntry & { indexStatus: string | null })[] = rows
         .map((row: (typeof rows)[number]) => {
             let summary
 
@@ -70,7 +70,7 @@ export default defineEventHandler(async (event: H3Event) => {
                 indexStatus: ragStatusMap[row.id] ?? null,
             }
         })
-        .filter((entry): entry is IHistoryEntry & { indexStatus?: string } => entry !== null)
+        .filter((entry): entry is IHistoryEntry & { indexStatus: string | null } => entry !== null)
 
     return { data, total, page, limit }
 })
