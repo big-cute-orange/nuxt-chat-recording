@@ -72,6 +72,7 @@ export function useSummarizer() {
 
                             // result.value = JSON.parse(cleaned) as IMeetingSummary;
                             const parsed = MeetingSummarySchema.safeParse(JSON.parse(cleaned))
+
                             if (parsed.success) {
                                 result.value = parsed.data
                             } else {

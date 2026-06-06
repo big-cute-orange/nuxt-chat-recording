@@ -16,12 +16,14 @@ export default defineEventHandler(async () => {
         if (!acc[l.provider]) acc[l.provider] = { total: 0, passed: 0 }
         acc[l.provider]!.total++
         if (l.validationPassed) acc[l.provider]!.passed++
+
         return acc
     }, {})
     const byVersion = logs.reduce<Record<string, { total: number; passed: number }>>((acc, l) => {
         if (!acc[l.promptVersion]) acc[l.promptVersion] = { total: 0, passed: 0 }
         acc[l.promptVersion]!.total++
         if (l.validationPassed) acc[l.promptVersion]!.passed++
+
         return acc
     }, {})
 

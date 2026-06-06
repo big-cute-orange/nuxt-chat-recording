@@ -28,18 +28,21 @@ function buildJudgeClient(provider: TProvider, config: Record<string, string>): 
     switch (provider) {
         case 'deepseek':
             if (!config.deepseekApiKey) return null
+
             return {
                 client: new OpenAI({ apiKey: config.deepseekApiKey, baseURL: 'https://api.deepseek.com/v1' }),
                 model: 'deepseek-chat',
             }
         case 'qwen':
             if (!config.qwenApiKey) return null
+
             return {
                 client: new OpenAI({ apiKey: config.qwenApiKey, baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1' }),
                 model: 'qwen-plus',
             }
         case 'doubao':
             if (!config.dobaoApiKey || !config.dobaoModelId) return null
+
             return {
                 client: new OpenAI({ apiKey: config.dobaoApiKey, baseURL: 'https://ark.cn-beijing.volces.com/api/v3', timeout: 60_000 }),
                 model: config.dobaoModelId,
@@ -152,6 +155,7 @@ export default defineEventHandler(async (event: H3Event) => {
         // If we swapped, invert the result back
         if (swapped) {
             const tmp = parsed.scores.model_a
+
             parsed.scores.model_a = parsed.scores.model_b
             parsed.scores.model_b = tmp
             if (parsed.winner === 'model_a') parsed.winner = 'model_b'

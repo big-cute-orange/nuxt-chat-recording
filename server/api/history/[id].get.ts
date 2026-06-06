@@ -12,14 +12,14 @@ export default defineEventHandler(async (event: H3Event) => {
     const id = getRouterParam(event, 'id')
 
     if (!id) {
-        throw createError({ statusCode: 400, message: 'id is required.' })
+        throw createError({ statusCode: 400, message: 'id 不能为空' })
     }
 
     const session = await getUserSession(event)
     const userId = session?.user?.id
 
     if (!userId) {
-        throw createError({ statusCode: 401, message: 'Login required.' })
+        throw createError({ statusCode: 401, message: '请先登录' })
     }
 
     const rows = await db

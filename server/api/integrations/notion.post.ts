@@ -105,6 +105,7 @@ export default defineEventHandler(async (event: H3Event) => {
             // Map owner to assignee property
             if (assigneeProp && item.owner) {
                 const propType = props[assigneeProp]?.type
+
                 if (propType === 'rich_text') {
                     properties[assigneeProp] = {
                         rich_text: [{ text: { content: item.owner } }],
@@ -124,6 +125,7 @@ export default defineEventHandler(async (event: H3Event) => {
                     const dateStr = item.deadline.trim()
                     // If it's already in ISO format or a valid date string
                     const date = new Date(dateStr)
+
                     if (!isNaN(date.getTime())) {
                         properties[deadlineProp] = {
                             date: { start: date.toISOString().split('T')[0]! },
@@ -136,9 +138,11 @@ export default defineEventHandler(async (event: H3Event) => {
 
             // Build description content for the page body
             const descriptionParts: string[] = []
+
             if (item.owner && (!assigneeProp || props[assigneeProp]?.type === 'people')) {
                 descriptionParts.push(`负责人: ${item.owner}`)
             }
+
             if (item.deadline && (!deadlineProp || props[deadlineProp]?.type !== 'date')) {
                 descriptionParts.push(`截止日期: ${item.deadline}`)
             }
@@ -192,6 +196,7 @@ export default defineEventHandler(async (event: H3Event) => {
                                 )
                             )
                             .limit(1)
+
                         if (existing.length) {
                             await db
                                 .update(actionItemsTable)

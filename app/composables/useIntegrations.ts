@@ -122,6 +122,7 @@ export function useIntegrations() {
                 `/api/action-items?meetingId=${meetingId}`
             )
             const notionItems = items.filter((i) => i.externalService === 'notion')
+
             if (notionItems.length) {
                 status.value.notion.results = notionItems.map((i) => ({ task: i.title, url: i.externalUrl, error: null }))
             }
