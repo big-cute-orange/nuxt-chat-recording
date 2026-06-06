@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { useDb } from '#server/utils/db'
 import { users } from '#server/db/schema'
 
-const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/
+const USERNAME_RE = /^\w{3,20}$/ // 用户名只能由字母 / 数字 / 下划线组成，长度 3～20 个字符，不能夹带别的字符
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event)
@@ -34,6 +34,7 @@ export default defineEventHandler(async (event) => {
 
     // ── Check username uniqueness ─────────────────────────────────────────────
     let existing
+
     try {
         existing = await db.query.users.findFirst({
             where: eq(users.username, username),
@@ -67,6 +68,7 @@ export default defineEventHandler(async (event) => {
     } catch (err) {
         // Unique constraint violation means a concurrent registration won the race
         const msg = err instanceof Error ? err.message : String(err)
+
         if (msg.includes('UNIQUE') || msg.includes('unique')) {
             throw createError({ statusCode: 409, message: '该用户名已被使用' })
         }

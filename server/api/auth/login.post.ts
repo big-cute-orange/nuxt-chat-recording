@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
 
     // ── Look up user ──────────────────────────────────────────────────────────
     let user
+
     try {
         user = await db.query.users.findFirst({
             where: eq(users.username, username),
