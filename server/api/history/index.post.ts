@@ -12,14 +12,14 @@ export default defineEventHandler(async (event: H3Event) => {
     const { summary, transcript, provider, mode, date } = body
 
     if (!summary || !provider) {
-        throw createError({ statusCode: 400, message: 'summary and provider are required.' })
+        throw createError({ statusCode: 400, message: 'summary、provider 不能为空' })
     }
 
     const session = await getUserSession(event)
     const userId = session?.user?.id
 
     if (!userId) {
-        throw createError({ statusCode: 401, message: 'Login required.' })
+        throw createError({ statusCode: 401, message: '请先登录' })
     }
 
     const id = crypto.randomUUID()

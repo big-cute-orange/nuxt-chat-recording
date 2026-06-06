@@ -4,7 +4,7 @@ const LEGACY_KEY = 'minutai:history'
 const LOCAL_LIMIT = 100
 
 export function useHistory() {
-    const { user, isReady, fetchSession } = useAuth()
+    const { user, isReady, fetchSession, loggedIn } = useAuth()
     const history = ref<IHistoryEntry[]>([])
     const total = ref(0)
     const page = ref(1)
@@ -12,6 +12,15 @@ export function useHistory() {
     const loading = ref(false)
     const error = ref<string | null>(null)
     const isLoggedIn = computed(() => Boolean(user.value?.id))
+
+    watch(loggedIn, (val) => {
+        if (!val) {
+            history.value = []
+            total.value = 0
+            page.value = 1
+            load(1)
+        }
+    })
 
     async function ensureAuthReady() {
         if (!isReady.value) {
@@ -26,11 +35,13 @@ export function useHistory() {
 
         try {
             const raw = localStorage.getItem(LEGACY_KEY)
+
             if (!raw) {
                 return []
             }
 
             const entries = JSON.parse(raw) as IHistoryEntry[]
+
             return Array.isArray(entries) ? entries : []
         } catch {
             return []
@@ -56,6 +67,7 @@ export function useHistory() {
             total.value = entries.length
             page.value = 1
             error.value = null
+
             return
         }
 
@@ -134,10 +146,12 @@ export function useHistory() {
             }
 
             const entries = [entry, ...readLocalHistory()]
+
             writeLocalHistory(entries)
             history.value = entries.slice(0, LOCAL_LIMIT)
             total.value = history.value.length
             page.value = 1
+
             return entry.id
         }
 
@@ -171,6 +185,7 @@ export function useHistory() {
             writeLocalHistory(entries)
             history.value = entries
             total.value = entries.length
+
             return
         }
 
@@ -195,9 +210,11 @@ export function useHistory() {
 
         if (!isLoggedIn.value) {
             const entries = readLocalHistory().filter((e) => e.id !== id)
+
             writeLocalHistory(entries)
             history.value = entries
             total.value = entries.length
+
             return
         }
 
@@ -213,6 +230,7 @@ export function useHistory() {
             writeLocalHistory([])
             history.value = []
             total.value = 0
+
             return
         }
 
