@@ -12,6 +12,7 @@
         "db:generate": "drizzle-kit generate",
         "db:migrate": "drizzle-kit migrate",
         "db:studio": "drizzle-kit studio",
+        "typecheck": "nuxt typecheck",
         "lint": "eslint .",
         "lint:fix": "eslint --fix .",
         "lint:css": "stylelint '**/*.{css,vue}'",
@@ -47,7 +48,9 @@
         "stylelint": "^16.10.0",
         "stylelint-config-recommended-vue": "^1.6.0",
         "stylelint-config-standard": "^36.0.1",
+        "typescript": "^6.0.3",
         "typescript-eslint": "^8.14.0",
-        "vue-eslint-parser": "^9.4.3"
+        "vue-eslint-parser": "^9.4.3",
+        "vue-tsc": "^3.3.3"
     }
 }
