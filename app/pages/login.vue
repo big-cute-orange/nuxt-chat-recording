@@ -22,15 +22,16 @@ const showConfirm = ref(false)
 
 // ── Validation ────────────────────────────────────────────────────────────────
 const USERNAME_RE = /^\w{3,20}$/
+const normalizedUsername = computed(() => fields.username.trim().toLowerCase())
 
 const errors = computed(() => ({
-    username: touched.username && !USERNAME_RE.test(fields.username) ? '3-20 位字母、数字或下划线' : '',
+    username: touched.username && !USERNAME_RE.test(normalizedUsername.value) ? '3-20 位字母、数字或下划线' : '',
     password: touched.password && fields.password.length < 8 ? '至少 8 位' : '',
     confirm: tab.value === 'register' && touched.confirm && fields.confirm !== fields.password ? '两次密码不一致' : '',
 }))
 
 const isValid = computed(() => {
-    const base = USERNAME_RE.test(fields.username) && fields.password.length >= 8
+    const base = USERNAME_RE.test(normalizedUsername.value) && fields.password.length >= 8
 
     if (tab.value === 'register') return base && fields.confirm === fields.password
 
@@ -50,9 +51,9 @@ async function handleSubmit() {
 
     try {
         if (tab.value === 'login') {
-            await login(fields.username, fields.password)
+            await login(normalizedUsername.value, fields.password)
         } else {
-            await register(fields.username, fields.password, fields.confirm)
+            await register(normalizedUsername.value, fields.password, fields.confirm)
         }
     } catch (err: unknown) {
         formError.value =
@@ -90,7 +91,7 @@ async function handleSubmit() {
                         <label class="label" for="username">用户名</label>
                         <input
                             id="username"
-                            v-model="fields.username"
+                            v-model.trim="fields.username"
                             type="text"
                             class="input"
                             :class="{ error: errors.username }"

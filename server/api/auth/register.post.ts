@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import { eq } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { useDb } from '#server/utils/db'
 import { users } from '#server/db/schema'
 
@@ -7,7 +7,8 @@ const USERNAME_RE = /^\w{3,20}$/ // 用户名只能由字母 / 数字 / 下划�
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event)
-    const { username, password, confirmPassword } = body ?? {}
+    const { username: rawUsername, password, confirmPassword } = body ?? {}
+    const username = typeof rawUsername === 'string' ? rawUsername.trim().toLowerCase() : ''
 
     // ── Validate input ────────────────────────────────────────────────────────
     if (!username || !password || !confirmPassword) {
@@ -37,7 +38,7 @@ export default defineEventHandler(async (event) => {
 
     try {
         existing = await db.query.users.findFirst({
-            where: eq(users.username, username),
+            where: sql`lower(${users.username}) = ${username}`,
         })
     } catch (err) {
         throw createError({ statusCode: 500, message: '服务器错误，请稍后重试' })
