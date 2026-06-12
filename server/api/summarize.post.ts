@@ -1,20 +1,26 @@
 import { defineEventHandler, readBody, setResponseHeaders, createError, type H3Event } from 'h3'
-import { version as promptVersion, transcriptPrompt, freeNotesPrompt } from '../prompts/index'
-import { MeetingSummarySchema } from '~~/shared/schemas/meeting'
 import { aiLogs } from '../db/schema'
 import { buildProviderConfig, type TProvider } from '../utils/ai'
+import {
+    buildSummaryUserMessage,
+    getSummarySystemPrompt,
+    parseSummaryOutput,
+    validateSummaryProvider,
+} from '#server/services/summary/generateSummary'
+import { version as promptVersion } from '#server/prompts/index'
 
 export default defineEventHandler(async (event: H3Event) => {
     const config = useRuntimeConfig()
     const body = await readBody(event)
     const { text, provider, inputType } = body
-    const SYSTEM_PROMPT = inputType === 'free-notes' ? freeNotesPrompt : transcriptPrompt
+    const summaryInputType = inputType === 'free-notes' ? 'free-notes' : 'transcript'
+    const SYSTEM_PROMPT = getSummarySystemPrompt(summaryInputType)
 
     if (!text || text.trim().length < 10) {
         throw createError({ statusCode: 400, message: 'Text is too short.' })
     }
 
-    if (!['deepseek', 'qwen', 'doubao'].includes(provider)) {
+    if (!validateSummaryProvider(provider)) {
         throw createError({ statusCode: 400, message: 'Invalid provider.' })
     }
 
@@ -35,10 +41,7 @@ export default defineEventHandler(async (event: H3Event) => {
     })
 
     const stream = event.node.res
-    const userMessage =
-        inputType === 'free-notes'
-            ? `Please structure these raw meeting notes:\n\n${text}`
-            : `Please analyze this meeting transcript:\n\n${text}`
+    const userMessage = buildSummaryUserMessage(summaryInputType, text)
 
     try {
         let fullText = ''
@@ -68,23 +71,8 @@ export default defineEventHandler(async (event: H3Event) => {
         stream.write(`data: ${JSON.stringify({ done: true, full: fullText })}\n\n`)
 
         // 异步写日志，不阻塞响应
-        const cleaned = fullText
-            .replace(/```json\n?/g, '')
-            .replace(/```\n?/g, '')
-            .trim()
-
         try {
-            let validationPassed = false
-            let validationErrors: string | null = null
-
-            try {
-                const parsed = MeetingSummarySchema.safeParse(JSON.parse(cleaned))
-
-                validationPassed = parsed.success
-                validationErrors = parsed.success ? null : JSON.stringify(parsed.error.flatten())
-            } catch {
-                validationErrors = JSON.stringify({ message: 'Invalid JSON returned by AI' })
-            }
+            const parsed = parseSummaryOutput(fullText)
 
             await useDb()
                 .insert(aiLogs)
@@ -93,8 +81,8 @@ export default defineEventHandler(async (event: H3Event) => {
                     provider,
                     promptVersion,
                     rawOutput: fullText,
-                    validationPassed,
-                    validationErrors,
+                    validationPassed: parsed.validation.passed,
+                    validationErrors: parsed.validation.errors,
                     createdAt: new Date().toISOString(),
                 })
         } catch {
