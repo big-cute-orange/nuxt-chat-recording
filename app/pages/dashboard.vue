@@ -15,7 +15,7 @@ const topTopics = computed(() => stats.value?.topTopics ?? [])
 const meetingTypes = computed(() => stats.value?.meetingTypes ?? [])
 const priorityBreakdown = computed(() => stats.value?.priorityBreakdown ?? [])
 const activityData = computed(() => stats.value?.activityData ?? [])
-const maxActivity = computed(() => Math.max(...activityData.value.map((d) => d.count), 1))
+const maxActivity = computed(() => Math.max(...(activityData.value as { date: string; count: number }[]).map((d) => d.count), 1))
 const recentMeetings = computed(() => stats.value?.recentMeetings ?? [])
 
 // ── 工具函数 ───────────────────────────────────────────────────────────────────
