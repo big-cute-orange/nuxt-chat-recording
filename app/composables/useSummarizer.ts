@@ -70,8 +70,19 @@ export function useSummarizer() {
                                 .replace(/```\n?/g, '')
                                 .trim()
 
-                            // result.value = JSON.parse(cleaned) as IMeetingSummary;
-                            const parsed = MeetingSummarySchema.safeParse(JSON.parse(cleaned))
+                            // Parse the final payload separately so failures surface
+                            // instead of being swallowed by the mid-stream JSON catch below.
+                            let payload: unknown
+
+                            try {
+                                payload = JSON.parse(cleaned)
+                            } catch {
+                                // Message must NOT contain "JSON" — the mid-stream catch
+                                // below swallows any error whose message includes it.
+                                throw new Error('AI returned malformed output.')
+                            }
+
+                            const parsed = MeetingSummarySchema.safeParse(payload)
 
                             if (parsed.success) {
                                 result.value = parsed.data

@@ -31,6 +31,12 @@ export async function* streamAnswer(
     try {
         const [queryVec] = await embedTexts([question], config.qwenApiKey)
 
+        if (!queryVec) {
+            yield { error: '生成问题向量失败。' }
+
+            return
+        }
+
         const results: QueryResult[] = await queryVectors(
             queryVec,
             userId,

@@ -27,8 +27,6 @@ export const useAuth = () => {
             await $fetch('/api/auth/login', { method: 'POST', body: { username, password } })
             await fetchUserSession()
             await navigateTo('/')
-        } catch (err: unknown) {
-            throw err
         } finally {
             isLoading.value = false
         }
@@ -41,8 +39,6 @@ export const useAuth = () => {
             await $fetch('/api/auth/register', { method: 'POST', body: { username, password, confirmPassword } })
             await fetchUserSession()
             await navigateTo('/')
-        } catch (err: unknown) {
-            throw err
         } finally {
             isLoading.value = false
         }

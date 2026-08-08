@@ -59,6 +59,7 @@ export default defineEventHandler(async (event: H3Event) => {
         return { status: 'succeeded' }
     } catch (err) {
         console.error('[RAG index] failed:', err)
+
         return { status: 'failed' }
     }
 })

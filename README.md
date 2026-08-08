@@ -12,6 +12,7 @@
 - **行动项管理** — 自动提取待办事项，支持优先级、负责人、截止日期
 - **历史记录** — 所有会议记录持久化存储，支持搜索和回溯
 - **数据看板** — 可视化统计图表，分析会议趋势
+- **RAG 问答** — 基于历史会议记录的向量检索问答，支持按会议/时间范围筛选（需要登录）
 
 ### 集成能力
 
@@ -135,25 +136,37 @@ nuxt-chat-recording/
 │   ├── components/          # Vue 组件
 │   ├── composables/         # 组合式函数
 │   ├── pages/               # 页面路由
-│   │   ├── index.vue        # 首页（会议分析）
+│   │   ├── index.vue        # 首页（会议分析 + RAG 问答）
 │   │   ├── dashboard.vue    # 数据看板
 │   │   ├── integrations.vue # 集成管理
 │   │   └── login.vue        # 登录页
 │   └── types/               # TypeScript 类型定义
 ├── server/
 │   ├── api/                 # API 端点
-│   │   ├── summarize.post.ts      # 单模型分析
-│   │   ├── compare.post.ts        # 对比模式
+│   │   ├── summarize.post.ts      # 单模型分析（SSE 流式）
+│   │   ├── compare.post.ts        # 对比模式（SSE 流式）
+│   │   ├── judge.post.ts          # AI 裁判评分
+│   │   ├── transcribe.post.ts     # 文件转文字
 │   │   ├── history/               # 历史记录 CRUD
 │   │   ├── action-items/          # 行动项管理
 │   │   ├── integrations/          # 集成配置 + Notion 同步
 │   │   ├── auth/                  # 认证相关
-│   │   └── dashboard/             # 统计数据
+│   │   ├── dashboard/             # 统计数据
+│   │   ├── rag/                   # RAG 问答（索引 + 检索）
+│   │   └── dev/                   # 开发工具（AI 日志查看）
+│   ├── services/
+│   │   ├── rag/             # RAG 服务层（embedding、向量检索、问答生成）
+│   │   └── summary/         # AI 摘要生成服务
+│   ├── middleware/          # 服务端中间件（认证等）
+│   ├── plugins/             # 服务端插件（自动迁移等）
+│   ├── prompts/             # Prompt 模板与版本管理
 │   ├── db/
 │   │   ├── schema.ts        # Drizzle 数据库 schema
 │   │   └── migrations/      # 数据库迁移文件
 │   └── utils/
 │       └── db.ts            # 数据库连接单例
+├── shared/
+│   └── schemas/             # 前后端共享 Zod schema
 ├── drizzle.config.ts        # Drizzle 配置
 └── nuxt.config.ts           # Nuxt 配置
 ```
@@ -212,6 +225,21 @@ pnpm db:generate
 
 # 打开 Drizzle Studio（数据库可视化工具）
 pnpm db:studio
+
+# TypeScript 类型检查
+pnpm typecheck
+
+# 代码格式化（Prettier + Stylelint + ESLint 一键）
+pnpm format
+
+# 单独运行各 linter
+pnpm lint           # ESLint
+pnpm lint:fix       # ESLint 自动修复
+pnpm lint:css       # Stylelint
+pnpm lint:css:fix   # Stylelint 自动修复
+
+# 运行 Prompt 评估
+pnpm eval
 ```
 
 ## License

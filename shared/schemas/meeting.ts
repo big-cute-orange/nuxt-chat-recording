@@ -21,3 +21,5 @@ export const MeetingSummarySchema = z.object({
     meetingType: z.string().default(''),
     keyTopics: z.array(z.string()).default([]),
 })
+
+export type IMeetingSummary = z.infer<typeof MeetingSummarySchema>

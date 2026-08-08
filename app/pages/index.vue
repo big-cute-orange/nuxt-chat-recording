@@ -521,9 +521,7 @@ function toggleCompareProvider(id: TProvider) {
                     <div class="input-tabs">
                         <button :class="['tab', inputMode === 'paste' ? 'active' : '']" @click="inputMode = 'paste'">粘贴文本</button>
                         <button :class="['tab', inputMode === 'upload' ? 'active' : '']" @click="inputMode = 'upload'">上传文件</button>
-                        <!-- <button :class="['tab', inputMode === 'audio' ? 'active' : '']" @click="inputMode = 'audio'">
-                            🎙 Audio / Video
-                        </button> -->
+                        <!-- <button :class="['tab', inputMode === 'audio' ? 'active' : '']" @click="inputMode = 'audio'">🎙 音频 / 视频</button> -->
                         <!-- <button :class="['tab', inputMode === 'free-notes' ? 'active' : '']" @click="inputMode = 'free-notes'">
                             ✏ Free notes
                         </button> -->

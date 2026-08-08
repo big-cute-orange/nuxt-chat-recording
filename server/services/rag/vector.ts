@@ -8,6 +8,8 @@ export interface VectorMetadata {
     date: string
     contentType: string
     text: string
+    // Index signature required to satisfy Upstash Vector's Dict constraint
+    [key: string]: string
 }
 
 export interface QueryResult {
@@ -26,7 +28,7 @@ export async function upsertChunks(chunks: RagChunk[], vectors: number[][], upst
 
     const records = chunks.map((chunk, i) => ({
         id: chunk.id,
-        vector: vectors[i],
+        vector: vectors[i]!,
         metadata: { ...chunk.metadata, text: chunk.text },
     }))
 

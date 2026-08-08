@@ -29,7 +29,7 @@ const open = ref(false)
 const activeTab = ref<'history' | 'ask'>('history')
 const { loggedIn } = useAuth()
 
-const { question, answer, citations, loading: askLoading, error: askError, scope, dateRange, ask, reset: resetAsk } = useRagAsk()
+const { question, answer, citations, loading: askLoading, error: askError, scope, dateRange, ask } = useRagAsk()
 
 function closeSidebar() {
     open.value = false

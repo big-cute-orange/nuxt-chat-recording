@@ -1,11 +1,12 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import { eq } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { useDb } from '#server/utils/db'
 import { users } from '#server/db/schema'
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event)
-    const { username, password } = body ?? {}
+    const { username: rawUsername, password } = body ?? {}
+    const username = typeof rawUsername === 'string' ? rawUsername.trim().toLowerCase() : ''
 
     if (!username || !password) {
         throw createError({ statusCode: 400, message: '请填写用户名和密码' })
@@ -23,7 +24,7 @@ export default defineEventHandler(async (event) => {
 
     try {
         user = await db.query.users.findFirst({
-            where: eq(users.username, username),
+            where: sql`lower(${users.username}) = ${username}`,
         })
     } catch {
         throw createError({ statusCode: 500, message: '服务器错误，请稍后重试' })
