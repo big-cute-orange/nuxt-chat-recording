@@ -76,13 +76,33 @@ function getThreshold(): number {
 function countExpectedAssertions(expect: IMeetingEvalCase['expect']): number {
     let count = 0
 
-    if (typeof expect.schemaValid === 'boolean') count++
-    if (expect.lang) count++
-    if (typeof expect.minActionItems === 'number') count++
-    if (typeof expect.minDecisions === 'number') count++
-    if (expect.ownersInclude?.length) count += expect.ownersInclude.length
-    if (typeof expect.priorityValid === 'boolean') count++
-    if (typeof expect.noEmptyTask === 'boolean') count++
+    if (typeof expect.schemaValid === 'boolean') {
+        count++
+    }
+
+    if (expect.lang) {
+        count++
+    }
+
+    if (typeof expect.minActionItems === 'number') {
+        count++
+    }
+
+    if (typeof expect.minDecisions === 'number') {
+        count++
+    }
+
+    if (expect.ownersInclude?.length) {
+        count += expect.ownersInclude.length
+    }
+
+    if (typeof expect.priorityValid === 'boolean') {
+        count++
+    }
+
+    if (typeof expect.noEmptyTask === 'boolean') {
+        count++
+    }
 
     return Math.max(count, 1)
 }

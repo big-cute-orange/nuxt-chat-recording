@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
         existing = await db.query.users.findFirst({
             where: sql`lower(${users.username}) = ${username}`,
         })
-    } catch (err) {
+    } catch {
         throw createError({ statusCode: 500, message: '服务器错误，请稍后重试' })
     }
 

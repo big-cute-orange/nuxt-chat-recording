@@ -53,6 +53,7 @@ export function useHistory() {
             return
         }
 
+        // eslint-disable-next-line no-restricted-properties -- Stores anonymous meeting history, not tokens.
         localStorage.setItem(LEGACY_KEY, JSON.stringify(entries.slice(0, LOCAL_LIMIT)))
     }
 
