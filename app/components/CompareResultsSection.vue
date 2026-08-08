@@ -481,28 +481,33 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     flex-direction: column;
     gap: 0;
 }
+
 .compare-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-top: 24px;
 }
+
 @media (width <= 700px) {
     .compare-grid {
         grid-template-columns: 1fr;
     }
 }
+
 .results-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 8px;
 }
+
 .results-meta {
     display: flex;
     gap: 10px;
     align-items: center;
 }
+
 .meeting-type-badge {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
@@ -512,6 +517,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     padding: 4px 12px;
     border-radius: 20px;
 }
+
 .reset-btn {
     background: transparent;
     border: 1px solid var(--border-bright);
@@ -524,16 +530,19 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     font-weight: 600;
     transition: all 0.2s;
 }
+
 .reset-btn:hover {
     color: var(--text);
     border-color: var(--accent);
 }
+
 .compare-col {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 14px;
     overflow: hidden;
 }
+
 .compare-col-header {
     display: flex;
     align-items: center;
@@ -541,6 +550,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     padding: 16px 20px;
     border-bottom: 1px solid var(--border);
 }
+
 .compare-side-badge {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
@@ -564,28 +574,34 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     color: var(--accent);
     border: 1px solid rgb(124 109 255 / 30%);
 }
+
 .compare-provider-name {
     font-size: 15px;
     font-weight: 700;
 }
+
 .compare-error {
     padding: 24px 20px;
     color: var(--red);
     font-size: 13px;
 }
+
 .compare-field {
     padding: 16px 20px;
     border-bottom: 1px solid var(--border);
     transition: background 0.2s;
 }
+
 .compare-field:last-child {
     border-bottom: none;
 }
+
 .compare-field.differs {
     background: rgb(255 179 71 / 4%);
     border-left: 3px solid var(--amber);
     padding-left: 17px;
 }
+
 .compare-field-label {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -597,6 +613,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     gap: 8px;
     margin-bottom: 10px;
 }
+
 .compare-count-badge {
     display: inline-flex;
     align-items: center;
@@ -610,31 +627,37 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     color: var(--text-muted);
     font-size: 10px;
 }
+
 .compare-field-value {
     font-size: 13px;
     font-weight: 600;
 }
+
 .chip {
     font-size: 12px;
     font-weight: 600;
     padding: 4px 12px;
     border-radius: 20px;
 }
+
 .chip-purple {
     background: var(--accent-glow);
     color: var(--accent);
     border: 1px solid rgb(124 109 255 / 20%);
 }
+
 .compare-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
 }
+
 .compare-summary {
     font-size: 13px;
     line-height: 1.7;
     color: var(--text);
 }
+
 .priority-badge {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -645,15 +668,18 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     letter-spacing: 0.05em;
     flex-shrink: 0;
 }
+
 .compare-result {
     display: flex;
     flex-direction: column;
 }
+
 .compare-action-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
+
 .compare-action-item {
     display: flex;
     gap: 10px;
@@ -663,25 +689,30 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     border: 1px solid var(--border);
     border-radius: 8px;
 }
+
 .compare-action-body {
     display: flex;
     flex-direction: column;
     gap: 3px;
 }
+
 .compare-action-task {
     font-size: 12px;
     line-height: 1.4;
 }
+
 .compare-action-meta {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
     color: var(--text-muted);
 }
+
 .compare-decision-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
+
 .compare-decision-item {
     display: flex;
     gap: 12px;
@@ -690,6 +721,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     border: 1px solid var(--border);
     border-radius: 8px;
 }
+
 .decision-number {
     font-family: 'DM Mono', monospace;
     font-size: 18px;
@@ -699,45 +731,53 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     line-height: 1;
     padding-top: 2px;
 }
+
 .decision-text {
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 6px;
     line-height: 1.4;
 }
+
 .decision-rationale {
     font-size: 12px;
     color: var(--text-muted);
     line-height: 1.6;
     margin-bottom: 6px;
 }
+
 .decision-by {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
     color: var(--accent);
 }
+
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 24px;
 }
+
 .card-header {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 20px;
 }
+
 .card-icon {
     font-size: 16px;
     color: var(--accent);
 }
+
 .card-title {
     font-size: 16px;
     font-weight: 700;
     flex: 1;
     letter-spacing: -0.3px;
 }
+
 .card-count {
     font-family: 'DM Mono', monospace;
     font-size: 12px;
@@ -747,9 +787,11 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     padding: 2px 9px;
     border-radius: 20px;
 }
+
 .compare-transcript-card {
     margin-top: 20px;
 }
+
 .transcript-toggle {
     width: 100%;
     background: none;
@@ -759,41 +801,49 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     padding: 0;
     color: var(--text);
 }
+
 .transcript-toggle:hover .card-title {
     color: var(--accent);
 }
+
 .transcript-card-header {
     margin-bottom: 0;
 }
+
 .expand-arrow {
     font-size: 16px;
     color: var(--text-muted);
     transition: transform 0.25s ease;
     display: inline-block;
 }
+
 .expand-arrow.rotated {
     transform: rotate(180deg);
 }
+
 .transcript-body {
     padding-top: 20px;
     border-top: 1px solid var(--border);
     margin-top: 4px;
 }
+
 .transcript-text {
     font-family: 'DM Mono', monospace;
     font-size: 12px;
     line-height: 1.7;
     color: var(--text-muted);
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: anywhere;
     max-height: 400px;
     overflow-y: auto;
 }
+
 .export-actions {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
+
 .export-btn {
     display: flex;
     align-items: center;
@@ -808,10 +858,12 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     width: 100%;
     color: var(--text);
 }
+
 .export-btn:hover {
     border-color: var(--accent);
     background: var(--accent-glow);
 }
+
 .export-btn-icon {
     font-size: 16px;
     color: var(--accent);
@@ -819,12 +871,14 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     width: 20px;
     text-align: center;
 }
+
 .export-btn-label {
     font-family: Syne, sans-serif;
     font-size: 13px;
     font-weight: 600;
     flex: 1;
 }
+
 .export-btn-confirm {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
@@ -833,6 +887,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     transition: opacity 0.2s;
     flex-shrink: 0;
 }
+
 .export-btn-confirm.visible {
     opacity: 1;
 }
@@ -840,6 +895,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
 .fade-up-enter-active {
     transition: all 0.5s ease 0.1s;
 }
+
 .fade-up-enter-from {
     opacity: 0;
     transform: translateY(16px);
@@ -862,6 +918,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     flex-direction: column;
     gap: 16px;
 }
+
 .skeleton-title {
     display: flex;
     align-items: center;
@@ -870,46 +927,57 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     color: var(--text-muted);
     font-weight: 500;
 }
+
 .skeleton-title-icon {
     font-size: 15px;
 }
+
 .skeleton-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
+
 .skeleton-rows {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
+
 .skeleton-row {
     display: grid;
     grid-template-columns: 100px 1fr 1fr;
     gap: 12px;
     align-items: center;
 }
+
 .skeleton-bar {
     height: 10px;
     border-radius: 6px;
     background: var(--border);
     animation: shimmer 1.4s ease-in-out infinite;
 }
+
 .skeleton-reason {
     margin-top: 4px;
 }
+
 .w-20 {
     width: 80px;
 }
+
 .w-24 {
     width: 96px;
 }
+
 .w-32 {
     width: 128px;
 }
+
 .w-48 {
     width: 192px;
 }
+
 .w-full {
     width: 100%;
 }
@@ -919,6 +987,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     100% {
         opacity: 0.4;
     }
+
     50% {
         opacity: 0.9;
     }
@@ -932,11 +1001,13 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     padding: 14px 20px;
     border-bottom: 1px solid var(--border);
 }
+
 .judge-meta {
     display: flex;
     align-items: center;
     gap: 8px;
 }
+
 .judge-label {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -944,16 +1015,19 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     text-transform: uppercase;
     letter-spacing: 0.1em;
 }
+
 .judge-provider-name {
     font-size: 13px;
     font-weight: 700;
     color: var(--text);
 }
+
 .judge-winner {
     display: flex;
     align-items: center;
     gap: 8px;
 }
+
 .winner-label {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -961,17 +1035,20 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     text-transform: uppercase;
     letter-spacing: 0.1em;
 }
+
 .winner-name {
     font-size: 13px;
     font-weight: 700;
     padding: 3px 12px;
     border-radius: 20px;
 }
+
 .winner-name.win {
     background: rgb(22 163 74 / 12%);
     color: var(--green);
     border: 1px solid rgb(22 163 74 / 25%);
 }
+
 .winner-name.tie {
     background: var(--bg-hover);
     color: var(--text-muted);
@@ -985,19 +1062,23 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     padding: 16px 20px;
     gap: 0;
 }
+
 .judge-score-col {
     display: flex;
     flex-direction: column;
 }
+
 .judge-score-header-cell {
     height: 32px;
     display: flex;
     align-items: center;
     margin-bottom: 4px;
 }
+
 .judge-provider-header {
     gap: 8px;
 }
+
 .judge-side-badge {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -1010,26 +1091,31 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     justify-content: center;
     flex-shrink: 0;
 }
+
 .judge-side-badge.a {
     background: rgb(91 196 255 / 15%);
     color: var(--blue);
     border: 1px solid rgb(91 196 255 / 30%);
 }
+
 .judge-side-badge.b {
     background: rgb(124 109 255 / 15%);
     color: var(--accent);
     border: 1px solid rgb(124 109 255 / 30%);
 }
+
 .judge-provider-label {
     font-size: 13px;
     font-weight: 700;
 }
+
 .judge-score-cell {
     height: 36px;
     display: flex;
     align-items: center;
     border-top: 1px solid var(--border);
 }
+
 .judge-dim-label {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -1038,6 +1124,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     letter-spacing: 0.05em;
     padding-right: 12px;
 }
+
 .judge-overall-label {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -1048,10 +1135,12 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     font-weight: 700;
     border-top: 1px solid var(--border-bright);
 }
+
 .judge-score-value {
     gap: 10px;
     padding: 0 16px 0 4px;
 }
+
 .judge-overall-value {
     font-family: 'DM Mono', monospace;
     font-size: 15px;
@@ -1060,6 +1149,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     gap: 6px;
     border-top: 1px solid var(--border-bright);
 }
+
 .score-number {
     font-family: 'DM Mono', monospace;
     font-size: 13px;
@@ -1067,6 +1157,7 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     width: 18px;
     flex-shrink: 0;
 }
+
 .score-bar-track {
     flex: 1;
     height: 4px;
@@ -1074,12 +1165,14 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
     border-radius: 2px;
     overflow: hidden;
 }
+
 .score-bar-fill {
     height: 100%;
     border-radius: 2px;
     background: var(--border-bright);
     transition: width 0.6s ease;
 }
+
 .winner-check {
     font-size: 12px;
 }
@@ -1089,16 +1182,20 @@ function downloadMarkdown(s: IMeetingSummary, prov: string, key: string) {
 .judge-overall-value.win {
     color: var(--green);
 }
+
 .judge-score-value.win .score-bar-fill {
     background: var(--green);
 }
+
 .judge-score-value.lose .score-number,
 .judge-overall-value.lose {
     color: var(--text-muted);
 }
+
 .judge-score-value.neutral .score-number {
     color: var(--text);
 }
+
 .judge-overall-value.win .winner-check {
     color: var(--green);
 }

@@ -326,8 +326,8 @@ watch(
 .form-textarea:focus,
 .form-select:focus {
     outline: none;
-    border-color: var(--color-accent, #0066cc);
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    border-color: var(--color-accent, #06c);
+    box-shadow: 0 0 0 3px rgb(0 102 204 / 10%);
 }
 
 .form-input:disabled,
@@ -345,7 +345,7 @@ watch(
 
 .btn-create {
     padding: 8px 12px;
-    background: var(--color-accent, #0066cc);
+    background: var(--color-accent, #06c);
     color: white;
     border: none;
     border-radius: 4px;
@@ -390,7 +390,7 @@ watch(
     background: white;
     border: 1px solid var(--color-border, #e5e7eb);
     border-radius: 6px;
-    border-left: 4px solid var(--color-accent, #0066cc);
+    border-left: 4px solid var(--color-accent, #06c);
     transition: background 0.2s;
 }
 
@@ -428,7 +428,7 @@ watch(
     height: 18px;
     cursor: pointer;
     flex-shrink: 0;
-    accent-color: var(--color-accent, #0066cc);
+    accent-color: var(--color-accent, #06c);
 }
 
 .item-title {
@@ -439,7 +439,7 @@ watch(
 }
 
 .external-link {
-    color: var(--color-accent, #0066cc);
+    color: var(--color-accent, #06c);
     text-decoration: none;
     font-size: 14px;
     cursor: pointer;
@@ -520,7 +520,7 @@ watch(
     text-transform: capitalize;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .form-row {
         grid-template-columns: 1fr;
     }

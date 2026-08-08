@@ -231,7 +231,6 @@ function handleAsk() {
 <style scoped>
 .history-btn {
     appearance: none;
-    -webkit-appearance: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -375,7 +374,6 @@ function handleAsk() {
 
 .sidebar-close {
     appearance: none;
-    -webkit-appearance: none;
     background: var(--bg-hover);
     border: 1px solid var(--border-bright);
     color: var(--text-muted);
@@ -486,12 +484,12 @@ function handleAsk() {
 
 @keyframes pulse {
     0%, 100% { opacity: 1; }
+
     50% { opacity: 0.3; }
 }
 
 .history-delete {
     appearance: none;
-    -webkit-appearance: none;
     background: none;
     border: none;
     color: var(--text-dim);
@@ -743,7 +741,7 @@ function handleAsk() {
     line-height: 1.7;
     color: var(--text);
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .ask-citations {
