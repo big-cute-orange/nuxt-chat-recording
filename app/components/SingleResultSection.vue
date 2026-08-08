@@ -1353,7 +1353,7 @@ function downloadMarkdown(s: IMeetingSummary, prov?: string) {
     line-height: 1.7;
     color: var(--text-muted);
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: anywhere;
     max-height: 400px;
     overflow-y: auto;
 }

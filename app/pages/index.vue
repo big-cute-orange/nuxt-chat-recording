@@ -887,7 +887,6 @@ function toggleCompareProvider(id: TProvider) {
 .hero-title em {
     font-style: normal;
     background: linear-gradient(135deg, var(--accent) 0%, var(--blue) 100%);
-    background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
